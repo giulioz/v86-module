@@ -122,84 +122,84 @@ var ASYNC_SAFE = false;
         }
     }
 
-    function load_file_nodejs(filename, options)
-    {
-        let fs = require("fs");
+    // function load_file_nodejs(filename, options)
+    // {
+    //     let fs = require("fs");
 
-        if(options.range)
-        {
-            dbg_assert(!options.as_json);
+    //     if(options.range)
+    //     {
+    //         dbg_assert(!options.as_json);
 
-            fs["open"](filename, "r", (err, fd) =>
-            {
-                if(err) throw err;
+    //         fs["open"](filename, "r", (err, fd) =>
+    //         {
+    //             if(err) throw err;
 
-                let length = options.range.length;
-                var buffer = Buffer.allocUnsafe(length);
+    //             let length = options.range.length;
+    //             var buffer = Buffer.allocUnsafe(length);
 
-                fs["read"](fd, buffer, 0, length, options.range.start, (err, bytes_read) =>
-                {
-                    if(err) throw err;
+    //             fs["read"](fd, buffer, 0, length, options.range.start, (err, bytes_read) =>
+    //             {
+    //                 if(err) throw err;
 
-                    dbg_assert(bytes_read === length);
-                    options.done && options.done(new Uint8Array(buffer));
+    //                 dbg_assert(bytes_read === length);
+    //                 options.done && options.done(new Uint8Array(buffer));
 
-                    fs["close"](fd, (err) => {
-                        if(err) throw err;
-                    });
-                });
-            });
-        }
-        else
-        {
-            var o = {
-                encoding: options.as_json ? "utf-8" : null,
-            };
+    //                 fs["close"](fd, (err) => {
+    //                     if(err) throw err;
+    //                 });
+    //             });
+    //         });
+    //     }
+    //     else
+    //     {
+    //         var o = {
+    //             encoding: options.as_json ? "utf-8" : null,
+    //         };
 
-            fs["readFile"](filename, o, function(err, data)
-            {
-                if(err)
-                {
-                    console.log("Could not read file:", filename, err);
-                }
-                else
-                {
-                    var result = data;
+    //         fs["readFile"](filename, o, function(err, data)
+    //         {
+    //             if(err)
+    //             {
+    //                 console.log("Could not read file:", filename, err);
+    //             }
+    //             else
+    //             {
+    //                 var result = data;
 
-                    if(options.as_json)
-                    {
-                        result = JSON.parse(result);
-                    }
-                    else
-                    {
-                        result = new Uint8Array(result).buffer;
-                    }
+    //                 if(options.as_json)
+    //                 {
+    //                     result = JSON.parse(result);
+    //                 }
+    //                 else
+    //                 {
+    //                     result = new Uint8Array(result).buffer;
+    //                 }
 
-                    options.done(result);
-                }
-            });
-        }
-    }
+    //                 options.done(result);
+    //             }
+    //         });
+    //     }
+    // }
 
-    if(typeof XMLHttpRequest === "undefined")
-    {
-        var determine_size = function(path, cb)
-        {
-            require("fs")["stat"](path, (err, stats) =>
-            {
-                if(err)
-                {
-                    cb(err);
-                }
-                else
-                {
-                    cb(null, stats.size);
-                }
-            });
-        };
-    }
-    else
-    {
+    // if(typeof XMLHttpRequest === "undefined")
+    // {
+    //     var determine_size = function(path, cb)
+    //     {
+    //         require("fs")["stat"](path, (err, stats) =>
+    //         {
+    //             if(err)
+    //             {
+    //                 cb(err);
+    //             }
+    //             else
+    //             {
+    //                 cb(null, stats.size);
+    //             }
+    //         });
+    //     };
+    // }
+    // else
+    // {
         var determine_size = function(url, cb)
         {
             v86util.load_file(url, {
@@ -223,7 +223,7 @@ var ASYNC_SAFE = false;
                 }
             });
         };
-    }
+    // }
 
     /**
      * Asynchronous access to ArrayBuffer, loading blocks lazily as needed,

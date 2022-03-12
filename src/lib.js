@@ -90,16 +90,16 @@ if(typeof crypto !== "undefined" && crypto.getRandomValues)
         return rand_data[0];
     };
 }
-else if(typeof require !== "undefined")
-{
-    /** @type {{ randomBytes: Function }} */
-    const crypto = require("crypto");
+// else if(typeof require !== "undefined")
+// {
+//     /** @type {{ randomBytes: Function }} */
+//     const crypto = require("crypto");
 
-    v86util.get_rand_int = function()
-    {
-        return crypto.randomBytes(4)["readInt32LE"](0);
-    };
-}
+//     v86util.get_rand_int = function()
+//     {
+//         return crypto.randomBytes(4)["readInt32LE"](0);
+//     };
+// }
 else
 {
     dbg_assert(false, "Unsupported platform: No cryptographic random values");
