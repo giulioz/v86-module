@@ -1,6 +1,6 @@
 {
   "name": "v86-module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A bundler-friendly version of the v86 PC Emulator",
   "repository": "https://github.com/giulioz/v86-module",
   "author": "Giulio Zausa <mail.zausa.giulio@gmail.com>",
