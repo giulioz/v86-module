@@ -5,7 +5,7 @@
  *
  * @param {BusConnector} bus
  */
-function SerialAdapter(element, bus)
+export function SerialAdapter(element, bus)
 {
     var serial = this;
 
@@ -199,7 +199,7 @@ function SerialAdapter(element, bus)
  *
  * @param {BusConnector} bus
  */
-function SerialRecordingAdapter(bus)
+export function SerialRecordingAdapter(bus)
 {
     var serial = this;
     this.text = "";
@@ -214,7 +214,7 @@ function SerialRecordingAdapter(bus)
  * @constructor
  * @param {BusConnector} bus
  */
-function SerialAdapterXtermJS(element, bus)
+export function SerialAdapterXtermJS(element, bus)
 {
     this.element = element;
 

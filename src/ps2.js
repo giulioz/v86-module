@@ -1,7 +1,9 @@
 "use strict";
 
+import { ByteQueue } from "./lib";
+
 /** @const */
-let PS2_LOG_VERBOSE = false;
+export let PS2_LOG_VERBOSE = false;
 
 /**
  * @constructor
@@ -811,3 +813,5 @@ PS2.prototype.port64_write = function(write_byte)
         dbg_log("port 64: Unimplemented command byte: " + h(write_byte), LOG_PS2);
     }
 };
+
+export { PS2 };

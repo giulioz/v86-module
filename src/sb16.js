@@ -1,5 +1,9 @@
 "use strict";
 
+import { LOG_SB16, MIXER_CHANNEL_BOTH, MIXER_CHANNEL_LEFT, MIXER_CHANNEL_RIGHT, MIXER_SRC_DAC, MIXER_SRC_MASTER, MIXER_SRC_PCSPEAKER } from "./const";
+import { ByteQueue, FloatQueue, h, SyncBuffer } from "./lib";
+import { dbg_log } from "./log";
+
 // Useful documentation, articles, and source codes for reference:
 // ===============================================================
 //
@@ -25,7 +29,7 @@
 // -> https://www.virtualbox.org/svn/vbox/trunk/src/VBox/Devices/Audio/DevSB16.cpp
 // -> https://github.com/mdaniel/virtualbox-org-svn-vbox-trunk/blob/master/src/VBox/Devices/Audio/DevSB16.cpp
 
-var
+export var
 
     // Used for drivers to identify device (DSP command 0xE3).
 /** @const */ DSP_COPYRIGHT = "COPYRIGHT (C) CREATIVE TECHNOLOGY LTD, 1992.",
@@ -78,12 +82,12 @@ var
 
 // Probably less efficient, but it's more maintainable, instead
 // of having a single large unorganised and decoupled table.
-var DSP_COMMAND_SIZES = new Uint8Array(256);
-var DSP_COMMAND_HANDLERS = [];
-var MIXER_READ_HANDLERS = [];
-var MIXER_WRITE_HANDLERS = [];
-var MIXER_REGISTER_IS_LEGACY = new Uint8Array(256);
-var FM_HANDLERS = [];
+export var DSP_COMMAND_SIZES = new Uint8Array(256);
+export var DSP_COMMAND_HANDLERS = [];
+export var MIXER_READ_HANDLERS = [];
+export var MIXER_WRITE_HANDLERS = [];
+export var MIXER_REGISTER_IS_LEGACY = new Uint8Array(256);
+export var FM_HANDLERS = [];
 
 
 /**
@@ -92,7 +96,7 @@ var FM_HANDLERS = [];
  * @param {CPU} cpu
  * @param {BusConnector} bus
  */
-function SB16(cpu, bus)
+export function SB16(cpu, bus)
 {
     /** @const @type {CPU} */
     this.cpu = cpu;

@@ -1,5 +1,7 @@
 "use strict";
 
+import { v86util } from "../lib";
+
 /** @const */
 var ASYNC_SAFE = false;
 

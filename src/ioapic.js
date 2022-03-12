@@ -3,47 +3,47 @@
 // http://download.intel.com/design/chipsets/datashts/29056601.pdf
 
 /** @const */
-var IOAPIC_ADDRESS = 0xFEC00000;
+export var IOAPIC_ADDRESS = 0xFEC00000;
 
 /** @const */
-var IOREGSEL = 0;
+export var IOREGSEL = 0;
 
 /** @const */
-var IOWIN = 0x10;
+export var IOWIN = 0x10;
 
 /** @const */
-var IOAPIC_IRQ_COUNT = 24;
+export var IOAPIC_IRQ_COUNT = 24;
 
 /** @const */
-var IOAPIC_ID = 0; // must match value in seabios
+export var IOAPIC_ID = 0; // must match value in seabios
 
 
 /** @const */
-var IOAPIC_CONFIG_TRIGGER_MODE_LEVEL = 1 << 15;
+export var IOAPIC_CONFIG_TRIGGER_MODE_LEVEL = 1 << 15;
 
 /** @const */
-var IOAPIC_CONFIG_MASKED = 1 << 16;
+export var IOAPIC_CONFIG_MASKED = 1 << 16;
 
 /** @const */
-var IOAPIC_CONFIG_DELIVS = 1 << 12;
+export var IOAPIC_CONFIG_DELIVS = 1 << 12;
 
 /** @const */
-var IOAPIC_CONFIG_REMOTE_IRR = 1 << 14;
+export var IOAPIC_CONFIG_REMOTE_IRR = 1 << 14;
 
 /** @const */
-var IOAPIC_CONFIG_READONLY_MASK = IOAPIC_CONFIG_REMOTE_IRR | IOAPIC_CONFIG_DELIVS | 0xFFFE0000;
+export var IOAPIC_CONFIG_READONLY_MASK = IOAPIC_CONFIG_REMOTE_IRR | IOAPIC_CONFIG_DELIVS | 0xFFFE0000;
 
 /** @const */
-var IOAPIC_DELIVERY_FIXED = 0;
+export var IOAPIC_DELIVERY_FIXED = 0;
 
 /** @const */
-var IOAPIC_DELIVERY_LOWEST_PRIORITY = 1;
+export var IOAPIC_DELIVERY_LOWEST_PRIORITY = 1;
 
 /** @const */
-var IOAPIC_DELIVERY_NMI = 4;
+export var IOAPIC_DELIVERY_NMI = 4;
 
 /** @const */
-var IOAPIC_DELIVERY_INIT = 5;
+export var IOAPIC_DELIVERY_INIT = 5;
 
 
 /**
@@ -362,3 +362,5 @@ IOAPIC.prototype.set_state = function(state)
     this.irr = state[4];
     this.irq_value = state[5];
 };
+
+export { IOAPIC };

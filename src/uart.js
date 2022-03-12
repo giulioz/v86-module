@@ -1,5 +1,9 @@
 "use strict";
 
+import { LOG_SERIAL } from "./const";
+import { ByteQueue, h } from "./lib";
+import { dbg_log } from "./log";
+
 /*
  * Serial ports
  * http://wiki.osdev.org/UART
@@ -8,23 +12,23 @@
  */
 
 /** @const */
-var DLAB = 0x80;
+export var DLAB = 0x80;
 
 
-/** @const */ var UART_IER_MSI  = 0x08; /* Modem Status Changed int. */
-/** @const */ var UART_IER_THRI = 0x02; /* Enable Transmitter holding register int. */
-/** @const */ var UART_IER_RDI = 0x01; /* Enable receiver data interrupt */
+/** @const */ export var UART_IER_MSI  = 0x08; /* Modem Status Changed int. */
+/** @const */ export var UART_IER_THRI = 0x02; /* Enable Transmitter holding register int. */
+/** @const */ export var UART_IER_RDI = 0x01; /* Enable receiver data interrupt */
 
-/** @const */var UART_IIR_MSI = 0x00; /* Modem status interrupt (Low priority) */
-/** @const */var UART_IIR_NO_INT = 0x01;
-/** @const */var UART_IIR_THRI = 0x02; /* Transmitter holding register empty */
-/** @const */var UART_IIR_RDI = 0x04; /* Receiver data interrupt */
-/** @const */var UART_IIR_RLSI = 0x06; /* Receiver line status interrupt (High p.) */
-/** @const */var UART_IIR_CTI = 0x0c; /* Character timeout */
+/** @const */ export var UART_IIR_MSI = 0x00; /* Modem status interrupt (Low priority) */
+/** @const */ export var UART_IIR_NO_INT = 0x01;
+/** @const */ export var UART_IIR_THRI = 0x02; /* Transmitter holding register empty */
+/** @const */ export var UART_IIR_RDI = 0x04; /* Receiver data interrupt */
+/** @const */ export var UART_IIR_RLSI = 0x06; /* Receiver line status interrupt (High p.) */
+/** @const */ export var UART_IIR_CTI = 0x0c; /* Character timeout */
 
-/** @const */ var UART_LSR_DATA_READY        = 0x1;  // data available
-/** @const */ var UART_LSR_TX_EMPTY        = 0x20; // TX (THR) buffer is empty
-/** @const */ var UART_LSR_TRANSMITTER_EMPTY = 0x40; // TX empty and line is idle
+/** @const */ export var UART_LSR_DATA_READY        = 0x1;  // data available
+/** @const */ export var UART_LSR_TX_EMPTY        = 0x20; // TX (THR) buffer is empty
+/** @const */ export var UART_LSR_TRANSMITTER_EMPTY = 0x40; // TX empty and line is idle
 
 
 /**
@@ -171,7 +175,7 @@ function UART(cpu, port, bus)
         dbg_log("read interrupt identification: " + h(this.iir), LOG_SERIAL);
 
         if (this.iir == UART_IIR_THRI) {
-            this.ClearInterrupt(UART_IIR_THRI);
+            // this.ClearInterrupt(UART_IIR_THRI);
         }
 
         return ret;
@@ -339,3 +343,5 @@ UART.prototype.write_data = function(out_byte)
         this.current_line = [];
     }
 };
+
+export { UART };

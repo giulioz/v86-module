@@ -1,5 +1,10 @@
 "use strict";
 
+import { DEBUG, LOG_ALL_IO } from "./config";
+import { LOG_IO, MMAP_BLOCK_BITS, MMAP_BLOCK_SIZE } from "./const";
+import { h } from "./lib";
+import { dbg_assert, dbg_log } from "./log";
+
 /**
  * The ISA IO bus
  * Devices register their ports here
@@ -459,3 +464,5 @@ IO.prototype.get_port_description = function(addr)
         return "";
     }
 };
+
+export { IO };

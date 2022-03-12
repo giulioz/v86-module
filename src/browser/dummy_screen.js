@@ -5,7 +5,7 @@
  *
  * @param {BusConnector} bus
  */
-function DummyScreenAdapter(bus)
+export function DummyScreenAdapter(bus)
 {
     var
         graphic_image_data,

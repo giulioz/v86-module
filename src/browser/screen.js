@@ -6,7 +6,7 @@
  *
  * @param {BusConnector} bus
  */
-function ScreenAdapter(screen_container, bus)
+export function ScreenAdapter(screen_container, bus)
 {
     console.assert(screen_container, "1st argument must be a DOM container");
 

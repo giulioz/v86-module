@@ -1,27 +1,30 @@
 "use strict";
 
-/** @const */
-var STATE_VERSION = 6;
+import { DEBUG } from "./config";
+import { CPU } from "./cpu";
 
 /** @const */
-var STATE_MAGIC = 0x86768676|0;
+export var STATE_VERSION = 6;
 
 /** @const */
-var STATE_INDEX_MAGIC = 0;
+export var STATE_MAGIC = 0x86768676|0;
 
 /** @const */
-var STATE_INDEX_VERSION = 1;
+export var STATE_INDEX_MAGIC = 0;
 
 /** @const */
-var STATE_INDEX_TOTAL_LEN = 2;
+export var STATE_INDEX_VERSION = 1;
 
 /** @const */
-var STATE_INDEX_INFO_LEN = 3;
+export var STATE_INDEX_TOTAL_LEN = 2;
 
 /** @const */
-var STATE_INFO_BLOCK_START = 16;
+export var STATE_INDEX_INFO_LEN = 3;
 
-const ZSTD_MAGIC = 0xFD2FB528;
+/** @const */
+export var STATE_INFO_BLOCK_START = 16;
+
+export const ZSTD_MAGIC = 0xFD2FB528;
 
 /** @constructor */
 function StateLoadError(msg)

@@ -11,7 +11,7 @@
  * @param {string} url
  * @param {BusConnector} bus
  */
-function NetworkAdapter(url, bus)
+export function NetworkAdapter(url, bus)
 {
     this.bus = bus;
     this.socket = undefined;

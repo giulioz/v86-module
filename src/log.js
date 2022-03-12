@@ -1,5 +1,9 @@
 "use strict";
 
+import { DEBUG, LOG_LEVEL, LOG_TO_FILE } from "./config";
+import { LOG_NAMES } from "./const";
+import { v86util } from "./lib";
+
 var log_data = [];
 
 function do_the_log(message)
@@ -18,7 +22,7 @@ function do_the_log(message)
  * @type {function((string|number), number=)}
  * @const
  */
-var dbg_log = (function()
+export var dbg_log = (function()
 {
     if(!DEBUG)
     {
@@ -90,7 +94,7 @@ var dbg_log = (function()
 /**
  * @param {number=} level
  */
-function dbg_trace(level)
+export function dbg_trace(level)
 {
     if(!DEBUG) return;
 
@@ -102,7 +106,7 @@ function dbg_trace(level)
  * @param {string=} msg
  * @param {number=} level
  */
-function dbg_assert(cond, msg, level)
+export function dbg_assert(cond, msg, level)
 {
     if(!DEBUG) return;
 
@@ -113,7 +117,7 @@ function dbg_assert(cond, msg, level)
 }
 
 
-function dbg_assert_failed(msg)
+export function dbg_assert_failed(msg)
 {
     debugger;
     console.trace();

@@ -1,10 +1,12 @@
 "use strict";
 
+import { dbg_assert } from "./log";
+
 var goog = goog || {};
 goog.exportSymbol = function() {};
 goog.exportProperty = function() {};
 
-var v86util = v86util || {};
+export var v86util = v86util || {};
 
 // pad string with spaces on the right
 v86util.pads = function(str, len)
@@ -63,7 +65,7 @@ v86util.view = function(constructor, memory, offset, length)
  * @param {number=} len
  * @return {string}
  */
-function h(n, len)
+export function h(n, len)
 {
     if(!n)
     {
@@ -108,7 +110,7 @@ else
  * Synchronous access to ArrayBuffer
  * @constructor
  */
-function SyncBuffer(buffer)
+export function SyncBuffer(buffer)
 {
     dbg_assert(buffer instanceof ArrayBuffer);
 
@@ -272,7 +274,7 @@ SyncBuffer.prototype.set_state = function(state)
  * Queue wrapper around Uint8Array
  * Used by devices such as the PS2 controller
  */
-function ByteQueue(size)
+export function ByteQueue(size)
 {
     var data = new Uint8Array(size),
         start,
@@ -343,7 +345,7 @@ function ByteQueue(size)
  * Queue wrapper around Float32Array
  * Used by devices such as the sound blaster sound card
  */
-function FloatQueue(size)
+export function FloatQueue(size)
 {
     this.size = size;
     this.data = new Float32Array(size);
@@ -438,7 +440,7 @@ FloatQueue.prototype.clear = function()
  * @param {number} size
  * @constructor
  */
-function CircularQueue(size)
+export function CircularQueue(size)
 {
     this.data = [];
     this.index = 0;
@@ -471,7 +473,7 @@ CircularQueue.prototype.set = function(new_data)
     this.index = 0;
 };
 
-function dump_file(ab, name)
+export function dump_file(ab, name)
 {
     if(!(ab instanceof Array))
     {
@@ -482,7 +484,7 @@ function dump_file(ab, name)
     download(blob, name);
 }
 
-function download(file_or_blob, name)
+export function download(file_or_blob, name)
 {
     var a = document.createElement("a");
     a["download"] = name;

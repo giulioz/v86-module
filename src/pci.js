@@ -1,8 +1,12 @@
 "use strict";
 
+import { LOG_PCI } from "./const";
+import { h } from "./lib";
+import { dbg_assert, dbg_log } from "./log";
+
 // http://wiki.osdev.org/PCI
 
-var
+export var
 /** @const */ PCI_CONFIG_ADDRESS = 0xCF8,
 /** @const */ PCI_CONFIG_DATA = 0xCFC;
 
@@ -608,3 +612,5 @@ PCI.prototype.lower_irq = function(pci_id)
     //        " (" + this.devices[pci_id].name + ")", LOG_PCI);
     this.cpu.device_lower_irq(irq);
 };
+
+export { PCI };

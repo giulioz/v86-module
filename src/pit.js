@@ -4,7 +4,7 @@
  * @const
  * In kHz
  */
-var OSCILLATOR_FREQ = 1193.1816666; // 1.193182 MHz
+export var OSCILLATOR_FREQ = 1193.1816666; // 1.193182 MHz
 
 /**
  * @constructor
@@ -350,3 +350,5 @@ PIT.prototype.dump = function()
     const time = (reload || 0x10000) / OSCILLATOR_FREQ;
     dbg_log("counter0 ticks every " + time + "ms (reload=" + reload + ")");
 };
+
+export { PIT };

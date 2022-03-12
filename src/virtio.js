@@ -2,63 +2,63 @@
 
 // http://docs.oasis-open.org/virtio/virtio/v1.0/virtio-v1.0.html
 
-const VIRTIO_PCI_VENDOR_ID = 0x1AF4;
+export const VIRTIO_PCI_VENDOR_ID = 0x1AF4;
 // Identifies vendor-specific PCI capability.
-const VIRTIO_PCI_CAP_VENDOR = 0x09;
+export const VIRTIO_PCI_CAP_VENDOR = 0x09;
 // Length (bytes) of VIRTIO_PCI_CAP linked list entry.
-const VIRTIO_PCI_CAP_LENGTH = 16;
+export const VIRTIO_PCI_CAP_LENGTH = 16;
 
 // Capability types.
 
-const VIRTIO_PCI_CAP_COMMON_CFG = 1;
-const VIRTIO_PCI_CAP_NOTIFY_CFG = 2;
-const VIRTIO_PCI_CAP_ISR_CFG = 3;
-const VIRTIO_PCI_CAP_DEVICE_CFG = 4;
-const VIRTIO_PCI_CAP_PCI_CFG = 5;
+export const VIRTIO_PCI_CAP_COMMON_CFG = 1;
+export const VIRTIO_PCI_CAP_NOTIFY_CFG = 2;
+export const VIRTIO_PCI_CAP_ISR_CFG = 3;
+export const VIRTIO_PCI_CAP_DEVICE_CFG = 4;
+export const VIRTIO_PCI_CAP_PCI_CFG = 5;
 
 // Status bits (device_status values).
 
-const VIRTIO_STATUS_ACKNOWLEDGE = 1;
-const VIRTIO_STATUS_DRIVER = 2;
-const VIRTIO_STATUS_DRIVER_OK = 4;
-const VIRTIO_STATUS_FEATURES_OK = 8;
-const VIRTIO_STATUS_DEVICE_NEEDS_RESET = 64;
-const VIRTIO_STATUS_FAILED = 128;
+export const VIRTIO_STATUS_ACKNOWLEDGE = 1;
+export const VIRTIO_STATUS_DRIVER = 2;
+export const VIRTIO_STATUS_DRIVER_OK = 4;
+export const VIRTIO_STATUS_FEATURES_OK = 8;
+export const VIRTIO_STATUS_DEVICE_NEEDS_RESET = 64;
+export const VIRTIO_STATUS_FAILED = 128;
 
 // ISR bits (isr_status values).
 
-const VIRTIO_ISR_QUEUE = 1;
-const VIRTIO_ISR_DEVICE_CFG = 2;
+export const VIRTIO_ISR_QUEUE = 1;
+export const VIRTIO_ISR_DEVICE_CFG = 2;
 
 // Feature bits (bit positions).
 
-const VIRTIO_F_RING_INDIRECT_DESC = 28;
-const VIRTIO_F_RING_EVENT_IDX = 29;
-const VIRTIO_F_VERSION_1 = 32;
+export const VIRTIO_F_RING_INDIRECT_DESC = 28;
+export const VIRTIO_F_RING_EVENT_IDX = 29;
+export const VIRTIO_F_VERSION_1 = 32;
 
 // Queue struct sizes.
 
 // Size (bytes) of the virtq_desc struct per queue size.
-const VIRTQ_DESC_ENTRYSIZE = 16;
+export const VIRTQ_DESC_ENTRYSIZE = 16;
 // Size (bytes) of the virtq_avail struct ignoring ring entries.
-const VIRTQ_AVAIL_BASESIZE = 6;
+export const VIRTQ_AVAIL_BASESIZE = 6;
 // Size (bytes) of the virtq_avail struct per queue size.
-const VIRTQ_AVAIL_ENTRYSIZE = 2;
+export const VIRTQ_AVAIL_ENTRYSIZE = 2;
 // Size (bytes) of the virtq_used struct ignoring ring entries.
-const VIRTQ_USED_BASESIZE = 6;
+export const VIRTQ_USED_BASESIZE = 6;
 // Size (bytes) of the virtq_desc struct per queue size.
-const VIRTQ_USED_ENTRYSIZE = 8;
+export const VIRTQ_USED_ENTRYSIZE = 8;
 // Mask for wrapping the idx field of the virtq_used struct so that the value
 // naturally overflows after 65535 (idx is a word).
-const VIRTQ_IDX_MASK = 0xFFFF;
+export const VIRTQ_IDX_MASK = 0xFFFF;
 
 // Queue flags.
 
-const VIRTQ_DESC_F_NEXT = 1;
-const VIRTQ_DESC_F_WRITE = 2;
-const VIRTQ_DESC_F_INDIRECT = 4;
-const VIRTQ_AVAIL_F_NO_INTERRUPT = 1;
-const VIRTQ_USED_F_NO_NOTIFY = 1;
+export const VIRTQ_DESC_F_NEXT = 1;
+export const VIRTQ_DESC_F_WRITE = 2;
+export const VIRTQ_DESC_F_INDIRECT = 4;
+export const VIRTQ_AVAIL_F_NO_INTERRUPT = 1;
+export const VIRTQ_USED_F_NO_NOTIFY = 1;
 
 // Closure Compiler Types.
 
@@ -153,7 +153,7 @@ var VirtIO_Options;
  * @param {CPU} cpu
  * @param {VirtIO_Options} options
  */
-function VirtIO(cpu, options)
+export function VirtIO(cpu, options)
 {
     const io = cpu.io;
 

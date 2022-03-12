@@ -1,5 +1,7 @@
 "use strict";
 
+import { CMOS_FLOPPY_DRIVE_TYPE } from "./rtc";
+
 /**
  * @constructor
  *
@@ -456,3 +458,5 @@ FloppyController.prototype.raise_irq = function()
         this.cpu.device_raise_irq(6);
     }
 };
+
+export { FloppyController };

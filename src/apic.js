@@ -4,26 +4,26 @@
 
 
 /** @const */
-var APIC_LOG_VERBOSE = false;
+export var APIC_LOG_VERBOSE = false;
 
 /** @const */
-var APIC_ADDRESS = 0xFEE00000;
+export var APIC_ADDRESS = 0xFEE00000;
 
 /** @const */
-var APIC_TIMER_MODE_MASK = 3 << 17;
+export var APIC_TIMER_MODE_MASK = 3 << 17;
 
 /** @const */
-var APIC_TIMER_MODE_ONE_SHOT = 0;
+export var APIC_TIMER_MODE_ONE_SHOT = 0;
 
 /** @const */
-var APIC_TIMER_MODE_PERIODIC = 1 << 17;
+export var APIC_TIMER_MODE_PERIODIC = 1 << 17;
 
 /** @const */
-var APIC_TIMER_MODE_TSC = 2 << 17;
+export var APIC_TIMER_MODE_TSC = 2 << 17;
 
 
 /** @const */
-var DELIVERY_MODES = [
+export var DELIVERY_MODES = [
     "Fixed (0)",
     "Lowest Prio (1)",
     "SMI (2)",
@@ -35,7 +35,7 @@ var DELIVERY_MODES = [
 ];
 
 /** @const */
-var DESTINATION_MODES = ["physical", "logical"];
+export var DESTINATION_MODES = ["physical", "logical"];
 
 
 /**
@@ -628,3 +628,5 @@ APIC.prototype.register_get_highest_bit = function(v)
 
     return -1;
 };
+
+export { APIC };

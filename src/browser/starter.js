@@ -1,5 +1,19 @@
 "use strict";
 
+import { Bus } from "../bus";
+import { DEBUG } from "../config";
+import { WASM_TABLE_OFFSET, WASM_TABLE_SIZE } from "../const";
+import { SyncBuffer, v86util } from "../lib";
+import { dbg_assert, dbg_log, dbg_trace } from "../log";
+import { v86 } from "../main";
+import { NetworkAdapter } from "./network";
+import { KeyboardAdapter } from "./keyboard";
+import { MouseAdapter } from "./mouse";
+import { ScreenAdapter } from "./screen";
+import { DummyScreenAdapter } from "./dummy_screen";
+import { SerialAdapter, SerialRecordingAdapter, SerialAdapterXtermJS } from "./serial";
+import { SpeakerAdapter } from "./speaker";
+
 /**
  * Constructor for emulator instances.
  *
@@ -88,7 +102,7 @@
  * @param {Object} options Options to initialize the emulator with.
  * @constructor
  */
-function V86Starter(options)
+export function V86Starter(options)
 {
     //var worker = new Worker("src/browser/worker.js");
     //var adapter_bus = this.bus = WorkerBus.init(worker);

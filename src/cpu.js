@@ -1,7 +1,47 @@
 "use strict";
 
+import { ACPI } from "./acpi";
+import { APIC } from "./apic";
+import { DEBUG, ENABLE_HPET } from "./config";
+import { MMAP_BLOCK_SIZE } from "./const";
+import { DMA } from "./dma";
+import { FloppyController } from "./floppy";
+import { HPET } from "./hpet";
+import { IDEDevice } from "./ide";
+import { IO } from "./io";
+import { IOAPIC } from "./ioapic";
+import { v86util } from "./lib";
+import { dbg_assert, dbg_log } from "./log";
+import { Ne2k } from "./ne2k";
+import { PCI } from "./pci";
+import { PIC } from "./pic";
+import { PIT } from "./pit";
+import { PS2 } from "./ps2";
+import {
+  CMOS_BIOS_BOOTFLAG1,
+  CMOS_BIOS_BOOTFLAG2,
+  CMOS_BIOS_SMP_COUNT,
+  CMOS_EQUIPMENT_INFO,
+  CMOS_MEM_BASE_HIGH,
+  CMOS_MEM_BASE_LOW,
+  CMOS_MEM_EXTMEM2_HIGH,
+  CMOS_MEM_EXTMEM2_LOW,
+  CMOS_MEM_EXTMEM_HIGH,
+  CMOS_MEM_EXTMEM_LOW,
+  CMOS_MEM_HIGHMEM_HIGH,
+  CMOS_MEM_HIGHMEM_LOW,
+  CMOS_MEM_HIGHMEM_MID,
+  CMOS_MEM_OLD_EXT_HIGH,
+  CMOS_MEM_OLD_EXT_LOW,
+  RTC,
+} from "./rtc";
+import { SB16 } from "./sb16";
+import { UART } from "./uart";
+import { VGAScreen } from "./vga";
+
+
 /** @const */
-var CPU_LOG_VERBOSE = false;
+export var CPU_LOG_VERBOSE = false;
 
 
 // Resources:
@@ -1507,16 +1547,4 @@ CPU.prototype.device_lower_irq = function(i)
     }
 };
 
-// Closure Compiler's way of exporting
-if(typeof window !== "undefined")
-{
-    window["CPU"] = CPU;
-}
-else if(typeof module !== "undefined" && typeof module.exports !== "undefined")
-{
-    module.exports["CPU"] = CPU;
-}
-else if(typeof importScripts === "function")
-{
-    self["CPU"] = CPU;
-}
+export { CPU };

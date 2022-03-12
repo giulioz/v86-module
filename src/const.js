@@ -1,6 +1,6 @@
 "use strict";
 
-var
+export var
 /** @const */ LOG_ALL = -1,
 /** @const */ LOG_NONE = 0,
 
@@ -34,7 +34,7 @@ var
  * @const
  * @type {Array<Array<string|number>>}
  */
-var LOG_NAMES = [
+export var LOG_NAMES = [
     [1, ""],
     [LOG_CPU, "CPU"],
     [LOG_DISK, "DISK"],
@@ -61,7 +61,7 @@ var LOG_NAMES = [
     [LOG_SB16, "SB16"]
 ];
 
-var
+export var
 
 // flags register bitflags
 /** @const */ FLAG_CARRY = 1,
@@ -107,7 +107,7 @@ FLAGS_DEFAULT = 1 << 1,
 
 /** @const */ REG_LDTR = 7; // local descriptor table register
 
-var
+export var
     /**
      * The minimum number of bytes that can be memory-mapped
      * by one device.
@@ -119,45 +119,45 @@ var
     MMAP_BLOCK_SIZE = 1 << MMAP_BLOCK_BITS;
 
 /** @const */
-var CR0_PG = 1 << 31;
+export var CR0_PG = 1 << 31;
 /** @const */
-var CR4_PAE = 1 << 5;
+export var CR4_PAE = 1 << 5;
 
 
 // https://github.com/qemu/seabios/blob/14221cd86eadba82255fdc55ed174d401c7a0a04/src/fw/paravirt.c#L205-L219
 
-/** @const */ var FW_CFG_SIGNATURE = 0x00;
-/** @const */ var FW_CFG_ID = 0x01;
-/** @const */ var FW_CFG_RAM_SIZE = 0x03;
-/** @const */ var FW_CFG_NB_CPUS = 0x05;
-/** @const */ var FW_CFG_MAX_CPUS = 0x0F;
-/** @const */ var FW_CFG_NUMA = 0x0D;
-/** @const */ var FW_CFG_FILE_DIR = 0x19;
+/** @const */ export var FW_CFG_SIGNATURE = 0x00;
+/** @const */ export var FW_CFG_ID = 0x01;
+/** @const */ export var FW_CFG_RAM_SIZE = 0x03;
+/** @const */ export var FW_CFG_NB_CPUS = 0x05;
+/** @const */ export var FW_CFG_MAX_CPUS = 0x0F;
+/** @const */ export var FW_CFG_NUMA = 0x0D;
+/** @const */ export var FW_CFG_FILE_DIR = 0x19;
 
-/** @const */ var FW_CFG_CUSTOM_START = 0x8000;
+/** @const */ export var FW_CFG_CUSTOM_START = 0x8000;
 // This value is specific to v86, choosen to hopefully not collide with other indexes
-/** @const */ var FW_CFG_FILE_START = 0xC000;
+/** @const */ export var FW_CFG_FILE_START = 0xC000;
 
-/** @const */ var FW_CFG_SIGNATURE_QEMU = 0x554D4551;
+/** @const */ export var FW_CFG_SIGNATURE_QEMU = 0x554D4551;
 
 
 // See same constant in jit.rs
 /** @const */
-var WASM_TABLE_SIZE = 900;
+export var WASM_TABLE_SIZE = 900;
 
 /** @const */
-var WASM_TABLE_OFFSET = 1024;
+export var WASM_TABLE_OFFSET = 1024;
 
 
 /** @const */
-var MIXER_CHANNEL_LEFT = 0;
+export var MIXER_CHANNEL_LEFT = 0;
 /** @const */
-var MIXER_CHANNEL_RIGHT = 1;
+export var MIXER_CHANNEL_RIGHT = 1;
 /** @const */
-var MIXER_CHANNEL_BOTH = 2;
+export var MIXER_CHANNEL_BOTH = 2;
 /** @const */
-var MIXER_SRC_MASTER = 0;
+export var MIXER_SRC_MASTER = 0;
 /** @const */
-var MIXER_SRC_PCSPEAKER = 1;
+export var MIXER_SRC_PCSPEAKER = 1;
 /** @const */
-var MIXER_SRC_DAC = 2;
+export var MIXER_SRC_DAC = 2;

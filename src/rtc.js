@@ -1,44 +1,48 @@
 "use strict";
 
-/** @const */ var CMOS_RTC_SECONDS = 0x00;
-/** @const */ var CMOS_RTC_SECONDS_ALARM = 0x01;
-/** @const */ var CMOS_RTC_MINUTES = 0x02;
-/** @const */ var CMOS_RTC_MINUTES_ALARM = 0x03;
-/** @const */ var CMOS_RTC_HOURS = 0x04;
-/** @const */ var CMOS_RTC_HOURS_ALARM = 0x05;
-/** @const */ var CMOS_RTC_DAY_WEEK = 0x06;
-/** @const */ var CMOS_RTC_DAY_MONTH = 0x07;
-/** @const */ var CMOS_RTC_MONTH = 0x08;
-/** @const */ var CMOS_RTC_YEAR = 0x09;
-/** @const */ var CMOS_STATUS_A = 0x0a;
-/** @const */ var CMOS_STATUS_B = 0x0b;
-/** @const */ var CMOS_STATUS_C = 0x0c;
-/** @const */ var CMOS_STATUS_D = 0x0d;
-/** @const */ var CMOS_RESET_CODE = 0x0f;
+import { LOG_RTC } from "./const";
+import { h } from "./lib";
+import { dbg_assert, dbg_log } from "./log";
 
-/** @const */ var CMOS_FLOPPY_DRIVE_TYPE = 0x10;
-/** @const */ var CMOS_DISK_DATA = 0x12;
-/** @const */ var CMOS_EQUIPMENT_INFO = 0x14;
-/** @const */ var CMOS_MEM_BASE_LOW = 0x15;
-/** @const */ var CMOS_MEM_BASE_HIGH = 0x16;
-/** @const */ var CMOS_MEM_OLD_EXT_LOW = 0x17;
-/** @const */ var CMOS_MEM_OLD_EXT_HIGH = 0x18;
-/** @const */ var CMOS_DISK_DRIVE1_TYPE = 0x19;
-/** @const */ var CMOS_DISK_DRIVE2_TYPE = 0x1a;
-/** @const */ var CMOS_DISK_DRIVE1_CYL = 0x1b;
-/** @const */ var CMOS_DISK_DRIVE2_CYL = 0x24;
-/** @const */ var CMOS_MEM_EXTMEM_LOW = 0x30;
-/** @const */ var CMOS_MEM_EXTMEM_HIGH = 0x31;
-/** @const */ var CMOS_CENTURY = 0x32;
-/** @const */ var CMOS_MEM_EXTMEM2_LOW = 0x34;
-/** @const */ var CMOS_MEM_EXTMEM2_HIGH = 0x35;
-/** @const */ var CMOS_BIOS_BOOTFLAG1 = 0x38;
-/** @const */ var CMOS_BIOS_DISKTRANSFLAG = 0x39;
-/** @const */ var CMOS_BIOS_BOOTFLAG2 = 0x3d;
-/** @const */ var CMOS_MEM_HIGHMEM_LOW = 0x5b;
-/** @const */ var CMOS_MEM_HIGHMEM_MID = 0x5c;
-/** @const */ var CMOS_MEM_HIGHMEM_HIGH = 0x5d;
-/** @const */ var CMOS_BIOS_SMP_COUNT = 0x5f;
+/** @const */ export var CMOS_RTC_SECONDS = 0x00;
+/** @const */ export var CMOS_RTC_SECONDS_ALARM = 0x01;
+/** @const */ export var CMOS_RTC_MINUTES = 0x02;
+/** @const */ export var CMOS_RTC_MINUTES_ALARM = 0x03;
+/** @const */ export var CMOS_RTC_HOURS = 0x04;
+/** @const */ export var CMOS_RTC_HOURS_ALARM = 0x05;
+/** @const */ export var CMOS_RTC_DAY_WEEK = 0x06;
+/** @const */ export var CMOS_RTC_DAY_MONTH = 0x07;
+/** @const */ export var CMOS_RTC_MONTH = 0x08;
+/** @const */ export var CMOS_RTC_YEAR = 0x09;
+/** @const */ export var CMOS_STATUS_A = 0x0a;
+/** @const */ export var CMOS_STATUS_B = 0x0b;
+/** @const */ export var CMOS_STATUS_C = 0x0c;
+/** @const */ export var CMOS_STATUS_D = 0x0d;
+/** @const */ export var CMOS_RESET_CODE = 0x0f;
+
+/** @const */ export var CMOS_FLOPPY_DRIVE_TYPE = 0x10;
+/** @const */ export var CMOS_DISK_DATA = 0x12;
+/** @const */ export var CMOS_EQUIPMENT_INFO = 0x14;
+/** @const */ export var CMOS_MEM_BASE_LOW = 0x15;
+/** @const */ export var CMOS_MEM_BASE_HIGH = 0x16;
+/** @const */ export var CMOS_MEM_OLD_EXT_LOW = 0x17;
+/** @const */ export var CMOS_MEM_OLD_EXT_HIGH = 0x18;
+/** @const */ export var CMOS_DISK_DRIVE1_TYPE = 0x19;
+/** @const */ export var CMOS_DISK_DRIVE2_TYPE = 0x1a;
+/** @const */ export var CMOS_DISK_DRIVE1_CYL = 0x1b;
+/** @const */ export var CMOS_DISK_DRIVE2_CYL = 0x24;
+/** @const */ export var CMOS_MEM_EXTMEM_LOW = 0x30;
+/** @const */ export var CMOS_MEM_EXTMEM_HIGH = 0x31;
+/** @const */ export var CMOS_CENTURY = 0x32;
+/** @const */ export var CMOS_MEM_EXTMEM2_LOW = 0x34;
+/** @const */ export var CMOS_MEM_EXTMEM2_HIGH = 0x35;
+/** @const */ export var CMOS_BIOS_BOOTFLAG1 = 0x38;
+/** @const */ export var CMOS_BIOS_DISKTRANSFLAG = 0x39;
+/** @const */ export var CMOS_BIOS_BOOTFLAG2 = 0x3d;
+/** @const */ export var CMOS_MEM_HIGHMEM_LOW = 0x5b;
+/** @const */ export var CMOS_MEM_HIGHMEM_MID = 0x5c;
+/** @const */ export var CMOS_MEM_HIGHMEM_HIGH = 0x5d;
+/** @const */ export var CMOS_BIOS_SMP_COUNT = 0x5f;
 
 
 /**
@@ -350,3 +354,5 @@ RTC.prototype.cmos_write = function(index, value)
     dbg_assert(index < 128);
     this.cmos_data[index] = value;
 };
+
+export { RTC };

@@ -1,17 +1,17 @@
 "use strict";
 
 /** @const */
-var SHIFT_SCAN_CODE = 0x2A;
+export var SHIFT_SCAN_CODE = 0x2A;
 
 /** @const */
-var SCAN_CODE_RELEASE = 0x80;
+export var SCAN_CODE_RELEASE = 0x80;
 
 /**
  * @constructor
  *
  * @param {BusConnector} bus
  */
-function KeyboardAdapter(bus)
+export function KeyboardAdapter(bus)
 {
     var
         /**

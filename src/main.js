@@ -1,5 +1,7 @@
 "use strict";
 
+import { CPU } from "./cpu";
+
 /**
  * @constructor
  * @param {Object=} wasm
@@ -226,3 +228,5 @@ else
 {
     v86.microtick = Date.now;
 }
+
+export { v86 };

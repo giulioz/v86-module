@@ -1,16 +1,20 @@
 "use strict";
 
-/** @const */
-var DAC_QUEUE_RESERVE = 0.2;
+import { DEBUG } from "../config";
+import { MIXER_CHANNEL_BOTH, MIXER_CHANNEL_LEFT, MIXER_CHANNEL_RIGHT, MIXER_SRC_DAC, MIXER_SRC_MASTER, MIXER_SRC_PCSPEAKER } from "../const";
+import { dbg_assert, dbg_log } from "../log";
 
 /** @const */
-var AUDIOBUFFER_MINIMUM_SAMPLING_RATE = 8000;
+export var DAC_QUEUE_RESERVE = 0.2;
+
+/** @const */
+export var AUDIOBUFFER_MINIMUM_SAMPLING_RATE = 8000;
 
 /**
  * @constructor
  * @param {!BusConnector} bus
  */
-function SpeakerAdapter(bus)
+export function SpeakerAdapter(bus)
 {
     if(typeof window === "undefined")
     {

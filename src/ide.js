@@ -1,5 +1,7 @@
 "use strict";
 
+import { CMOS_BIOS_DISKTRANSFLAG, CMOS_DISK_DATA, CMOS_DISK_DRIVE1_CYL } from "./rtc";
+
 /** @param {number=} length */
 function hex_dump(buffer, length)
 {
@@ -33,9 +35,9 @@ function hex_dump(buffer, length)
 }
 
 /** @const */
-var CDROM_SECTOR_SIZE = 2048;
+export var CDROM_SECTOR_SIZE = 2048;
 /** @const */
-var HD_SECTOR_SIZE = 512;
+export var HD_SECTOR_SIZE = 512;
 
 /**
  * @constructor
@@ -2122,3 +2124,5 @@ IDEInterface.prototype.set_state = function(state)
 
     this.buffer && this.buffer.set_state(state[28]);
 };
+
+export { IDEDevice, IDEInterface };

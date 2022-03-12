@@ -2,7 +2,7 @@
 
 // A minimal elf parser for loading 32 bit, x86, little endian, executable elf files
 
-const ELF_MAGIC = 0x464C457F;
+export const ELF_MAGIC = 0x464C457F;
 
 let types = DataView.prototype;
 let U8 = { size: 1, get: types.getUint8, set: types.setUint8, };
@@ -95,7 +95,7 @@ function create_struct(struct)
 }
 
 /** @param {ArrayBuffer} buffer */
-function read_elf(buffer)
+export function read_elf(buffer)
 {
     let view = new DataView(buffer);
 

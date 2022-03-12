@@ -422,3 +422,5 @@ DMA.prototype.flipflop_read = function(dword)
         return (dword >> 8) & 0xFF;
     }
 };
+
+export { DMA };

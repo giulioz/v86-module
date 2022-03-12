@@ -3,7 +3,7 @@
 // http://www.uefi.org/sites/default/files/resources/ACPI_6_1.pdf
 
 /** @const */
-var PMTIMER_FREQ_SECONDS = 3579545;
+export var PMTIMER_FREQ_SECONDS = 3579545;
 
 /**
  * @constructor
@@ -205,3 +205,5 @@ ACPI.prototype.set_state = function(state)
     this.pm1_enable = state[2];
     this.gpe = state[3];
 };
+
+export { ACPI };

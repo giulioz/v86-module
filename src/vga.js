@@ -1,7 +1,9 @@
 "use strict";
 
+import { v86util } from "./lib";
 
-var
+
+export var
     /**
      * Always 64k
      * @const
@@ -19,23 +21,23 @@ var
 
 /** @const */
 //var VGA_LFB_ADDRESS = 0xFE000000; // set by seabios
-var VGA_LFB_ADDRESS = 0xE0000000;
+export var VGA_LFB_ADDRESS = 0xE0000000;
 
 /**
  * @const
  * Equals the maximum number of pixels for non svga.
  * 8 pixels per byte.
  */
-var VGA_PIXEL_BUFFER_SIZE = 8 * VGA_BANK_SIZE;
+export var VGA_PIXEL_BUFFER_SIZE = 8 * VGA_BANK_SIZE;
 
 /** @const */
-var VGA_MIN_MEMORY_SIZE = 4 * VGA_BANK_SIZE;
+export var VGA_MIN_MEMORY_SIZE = 4 * VGA_BANK_SIZE;
 
 /**
  * @const
  * @see {@link http://www.osdever.net/FreeVGA/vga/graphreg.htm#06}
  */
-var VGA_HOST_MEMORY_SPACE_START = Uint32Array.from([
+export var VGA_HOST_MEMORY_SPACE_START = Uint32Array.from([
     0xA0000,
     0xA0000,
     0xB0000,
@@ -46,7 +48,7 @@ var VGA_HOST_MEMORY_SPACE_START = Uint32Array.from([
  * @const
  * @see {@link http://www.osdever.net/FreeVGA/vga/graphreg.htm#06}
  */
-var VGA_HOST_MEMORY_SPACE_SIZE = Uint32Array.from([
+export var VGA_HOST_MEMORY_SPACE_SIZE = Uint32Array.from([
     0x20000, // 128K
     0x10000, // 64K
     0x8000, // 32K
@@ -59,7 +61,7 @@ var VGA_HOST_MEMORY_SPACE_SIZE = Uint32Array.from([
  * @param {BusConnector} bus
  * @param {number} vga_memory_size
  */
-function VGAScreen(cpu, bus, vga_memory_size)
+export function VGAScreen(cpu, bus, vga_memory_size)
 {
     this.cpu = cpu;
 

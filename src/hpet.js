@@ -1,7 +1,7 @@
 "use strict";
 
 
-var HPET_ADDR = 0xFED00000,
+export var HPET_ADDR = 0xFED00000,
     HPET_PERIOD = 0x05F5E100, // in nano seconds
     HPET_FREQ_MS = 1e12 / HPET_PERIOD, // in kHZ
     HPET_SUPPORT_64 = 0,
@@ -293,3 +293,5 @@ function HPET(cpu)
         }
     }
 }
+
+export { HPET };

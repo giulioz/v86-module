@@ -1,7 +1,9 @@
 "use strict";
 
+import { dbg_assert } from "./log";
+
 /** @const */
-var PIC_LOG_VERBOSE = false;
+export var PIC_LOG_VERBOSE = false;
 
 /**
  * Programmable Interrupt Controller
@@ -572,3 +574,4 @@ PIC.prototype.port4D0_write = function(value)
     this.elcr = value;
 };
 
+export { PIC };
