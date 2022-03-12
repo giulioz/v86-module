@@ -7,10 +7,10 @@ Bundler-friendly version of the v86 PC Emulator!
 Using Vite you can load binaries and wasm files directly!
 
 ```js
-import { V86Starter } from "v86-module";
-import v86Wasm from "v86-module/build/v86.wasm";
-import bios from "v86-module/bios/seabios.bin?url";
-import vgabios from "v86-module/bios/vgabios.bin?url";
+import { V86Starter } from "v86";
+import v86Wasm from "v86/build/v86.wasm";
+import bios from "v86/bios/seabios.bin?url";
+import vgabios from "v86/bios/vgabios.bin?url";
 import cdrom from "./images/linux.iso?url";
 
 new V86Starter({
@@ -51,8 +51,8 @@ new V86Starter({
 If you want to test the library without specific loaders for wasm and binary files, you can also use the base64 version:
 
 ```js
-import { V86Starter } from "v86-module";
-import { v86WASM, seabios, vgabios } from 'v86-module/build/binaries';
+import { V86Starter } from "v86";
+import { v86WASM, seabios, vgabios } from 'v86/build/binaries';
 import cdrom from "./images/linux.iso?url";
 
 async function main() {
