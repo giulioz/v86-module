@@ -1,4 +1,4 @@
-# v86-module
+# v86
 
 Bundler-friendly version of the v86 PC Emulator!
 
