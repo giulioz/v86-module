@@ -10,20 +10,27 @@
   "types": "build/index.d.ts",
   "sideEffects": true,
   "scripts": {
-    "build": "rollup -c",
+    "build": "npm run build-wasm && npm run build-js",
+    "build-wasm": "docker build -t v86build tools/docker/js-build/ && docker run -it --rm -v $(pwd):/v86 v86build",
+    "build-js": "rollup -c",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
+    "@ampproject/rollup-plugin-closure-compiler": "^0.27.0",
     "@rollup/plugin-commonjs": "^20.0.0",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^13.0.4",
+    "@rollup/plugin-replace": "^4.0.0",
     "rollup": "^2.26.10",
     "rollup-plugin-filesize": "^9.1.1",
     "rollup-plugin-terser": "^7.0.2"
   },
   "files": [
     "/bios",
-    "/build/index.*",
+    "/build/index.js",
+    "/build/index.cjs",
+    "/build/index-debug.js",
+    "/build/index-debug.cjs",
     "/build/*.wasm",
     "v86.css",
     "LICENSE"
