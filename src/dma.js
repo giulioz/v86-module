@@ -1,5 +1,9 @@
 "use strict";
 
+import { LOG_DMA } from "./const";
+import { h } from "./lib";
+import { dbg_log } from "./log";
+
 /**
  * @constructor
  * @param {CPU} cpu

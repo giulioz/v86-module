@@ -1,6 +1,8 @@
 "use strict";
 
-import { ByteQueue } from "./lib";
+import { LOG_PS2 } from "./const";
+import { ByteQueue, h } from "./lib";
+import { dbg_log } from "./log";
 
 /** @const */
 export let PS2_LOG_VERBOSE = false;

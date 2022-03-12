@@ -2,16 +2,17 @@
 
 import { ACPI } from "./acpi";
 import { APIC } from "./apic";
-import { DEBUG, ENABLE_HPET } from "./config";
-import { MMAP_BLOCK_SIZE } from "./const";
+import { DEBUG, DUMP_GENERATED_WASM, ENABLE_HPET, TIME_PER_FRAME } from "./config";
+import { FLAG_INTERRUPT, FW_CFG_CUSTOM_START, FW_CFG_FILE_DIR, FW_CFG_FILE_START, FW_CFG_ID, FW_CFG_MAX_CPUS, FW_CFG_NB_CPUS, FW_CFG_NUMA, FW_CFG_RAM_SIZE, FW_CFG_SIGNATURE, FW_CFG_SIGNATURE_QEMU, MMAP_BLOCK_SIZE, WASM_TABLE_OFFSET, WASM_TABLE_SIZE } from "./const";
 import { DMA } from "./dma";
 import { FloppyController } from "./floppy";
 import { HPET } from "./hpet";
 import { IDEDevice } from "./ide";
 import { IO } from "./io";
 import { IOAPIC } from "./ioapic";
-import { v86util } from "./lib";
+import { h, v86util } from "./lib";
 import { dbg_assert, dbg_log } from "./log";
+import { v86 } from "./main";
 import { Ne2k } from "./ne2k";
 import { PCI } from "./pci";
 import { PIC } from "./pic";

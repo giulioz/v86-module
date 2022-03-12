@@ -1,6 +1,8 @@
 "use strict";
 
-import { v86util } from "./lib";
+import { LOG_VGA } from "./const";
+import { h, v86util } from "./lib";
+import { dbg_assert, dbg_log } from "./log";
 
 
 export var

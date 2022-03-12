@@ -1,6 +1,8 @@
 "use strict";
 
+import { MMAP_BLOCK_BITS } from "./const";
 import { CPU } from "./cpu";
+import { dbg_assert } from "./log";
 
 
 CPU.prototype.mmap_read8 = function(addr)

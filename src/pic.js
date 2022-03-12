@@ -1,6 +1,8 @@
 "use strict";
 
-import { dbg_assert } from "./log";
+import { dbg_assert, dbg_log } from "./log";
+import { h, v86util } from "./lib";
+import { LOG_PIC } from "./const";
 
 /** @const */
 export var PIC_LOG_VERBOSE = false;

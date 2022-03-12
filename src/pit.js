@@ -1,5 +1,10 @@
 "use strict";
 
+import { LOG_PIT } from "./const";
+import { h } from "./lib";
+import { dbg_log } from "./log";
+import { v86 } from "./main";
+
 /**
  * @const
  * In kHz
