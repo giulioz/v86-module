@@ -4,7 +4,7 @@ import bios from "../bios/seabios.bin?url";
 import vgabios from "../bios/vgabios.bin?url";
 import cdrom from "../images/linux.iso?url";
 import hda from "../images/kolibri.img?url";
-import fda from "../images/windows101.img?url";
+import fda from "../images/freedos722.img?url";
 
 const emu = new V86Starter({
     wasm_fn: v86Wasm,

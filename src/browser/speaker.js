@@ -3,6 +3,7 @@
 import { DEBUG } from "../config";
 import { MIXER_CHANNEL_BOTH, MIXER_CHANNEL_LEFT, MIXER_CHANNEL_RIGHT, MIXER_SRC_DAC, MIXER_SRC_MASTER, MIXER_SRC_PCSPEAKER } from "../const";
 import { dbg_assert, dbg_log } from "../log";
+import { OSCILLATOR_FREQ } from "../pit";
 
 /** @const */
 export var DAC_QUEUE_RESERVE = 0.2;
