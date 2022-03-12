@@ -565,7 +565,7 @@ CPU.prototype.debug_init = function()
             {
                 if(typeof require === "function")
                 {
-                    cs = require("./capstone-x86.min.js");
+                    // cs = require("./capstone-x86.min.js");
                 }
                 else
                 {
@@ -623,7 +623,7 @@ CPU.prototype.debug_init = function()
         {
             if(typeof require === "function")
             {
-                wabt = require("./libwabt.js");
+                // wabt = require("./libwabt.js");
             }
             else
             {
