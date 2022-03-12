@@ -16,9 +16,9 @@ export default [
         output: { file: `build/index.js`, format: "esm" },
         external,
         plugins: [
-            replace({ "var DEBUG = true": "var DEBUG = true" }),
             json(),
             resolve({ extensions }),
+            replace({ "var DEBUG = true": "var DEBUG = false" }),
             compiler(),
             terser(),
             filesize(),
@@ -29,9 +29,9 @@ export default [
         output: { file: `build/index.cjs`, format: "cjs" },
         external,
         plugins: [
-            replace({ "var DEBUG = true": "var DEBUG = true" }),
             json(),
             resolve({ extensions }),
+            replace({ "var DEBUG = true": "var DEBUG = false" }),
             compiler(),
             terser(),
             filesize(),
@@ -42,9 +42,9 @@ export default [
         output: { file: `build/index-debug.js`, format: "esm" },
         external,
         plugins: [
-            replace({ "var DEBUG = true": "var DEBUG = false" }),
             json(),
             resolve({ extensions }),
+            replace({ "var DEBUG = true": "var DEBUG = true" }),
             terser(),
             filesize(),
         ],
@@ -54,9 +54,9 @@ export default [
         output: { file: `build/index-debug.cjs`, format: "cjs" },
         external,
         plugins: [
-            replace({ "var DEBUG = true": "var DEBUG = false" }),
             json(),
             resolve({ extensions }),
+            replace({ "var DEBUG = true": "var DEBUG = true" }),
             terser(),
             filesize(),
         ],
