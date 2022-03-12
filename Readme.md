@@ -1,3 +1,77 @@
+# v86-module
+
+Bundler-friendly version of the v86 PC Emulator!
+
+## Example
+
+Using Vite you can load binaries and wasm files directly!
+
+```js
+import { V86Starter } from "v86-module";
+import v86Wasm from "v86-module/build/v86.wasm";
+import bios from "v86-module/bios/seabios.bin?url";
+import vgabios from "v86-module/bios/vgabios.bin?url";
+import cdrom from "./images/linux.iso?url";
+
+new V86Starter({
+    wasm_fn: v86Wasm,
+    memory_size: 32 * 1024 * 1024,
+    vga_memory_size: 2 * 1024 * 1024,
+    screen_container: document.getElementById("screen_container"),
+    bios: { url: bios },
+    vga_bios: { url: vgabios },
+    cdrom: { url: cdrom },
+    autostart: true,
+});
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  </head>
+
+  <body>
+    <div id="screen_container">
+      <div
+        style="white-space: pre; font: 14px monospace; line-height: 14px"
+      ></div>
+      <canvas style="display: none"></canvas>
+    </div>
+    <script src="./index.js" type="module"></script>
+  </body>
+</html>
+```
+
+### Alternative: Base64 binaries
+
+If you want to test the library without specific loaders for wasm and binary files, you can also use the base64 version:
+
+```js
+import { V86Starter } from "v86-module";
+import { v86WASM, seabios, vgabios } from 'v86-module/build/binaries';
+import cdrom from "./images/linux.iso?url";
+
+async function main() {
+    new V86Starter({
+        wasm_fn: async (param) => (await WebAssembly.instantiate(await v86WASM, param)).instance.exports,
+        memory_size: 32 * 1024 * 1024,
+        vga_memory_size: 2 * 1024 * 1024,
+        screen_container: document.getElementById("screen_container"),
+        bios: { buffer: await seabios },
+        vga_bios: { buffer: await vgabios },
+        cdrom: { url: cdrom },
+        autostart: true,
+    });
+}
+main();
+```
+
+## Original Readme
+
 [![Join the chat at https://gitter.im/copy/v86](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/copy/v86)
 
 v86 emulates an x86-compatible CPU and hardware. Machine code is translated to
