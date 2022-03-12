@@ -1,8 +1,9 @@
 "use strict";
 
+import { DEBUG } from "./config";
 import { LOG_FLOPPY } from "./const";
 import { h } from "./lib";
-import { dbg_log } from "./log";
+import { dbg_assert, dbg_log } from "./log";
 import { CMOS_FLOPPY_DRIVE_TYPE } from "./rtc";
 
 /**

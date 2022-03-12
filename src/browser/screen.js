@@ -1,5 +1,6 @@
 "use strict";
 
+import { DEBUG_SCREEN_LAYERS } from "../config";
 import { dbg_assert } from "../log";
 
 /**
