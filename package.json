@@ -1,0 +1,24 @@
+{
+  "name": "v86-module",
+  "version": "0.0.1",
+  "description": "A bundler-friendly version of the v86 PC Emulator",
+  "repository": "https://github.com/giulioz/v86-module",
+  "author": "Giulio Zausa <mail.zausa.giulio@gmail.com>",
+  "license": "BSD-2-Clause",
+  "main": "build/index.cjs",
+  "module": "build/index.js",
+  "types": "build/index.d.ts",
+  "sideEffects": true,
+  "scripts": {
+    "build": "rollup -c",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^20.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.4",
+    "rollup": "^2.26.10",
+    "rollup-plugin-filesize": "^9.1.1",
+    "rollup-plugin-terser": "^7.0.2"
+  }
+}
