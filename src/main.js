@@ -97,7 +97,7 @@ v86.prototype.init = function(settings)
     this.bus.send("emulator-ready");
 };
 
-if(typeof process !== "undefined")
+if(typeof process !== "undefined" && global.setImmediate)
 {
     v86.prototype.yield = function(t, tick)
     {
