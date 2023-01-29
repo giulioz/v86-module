@@ -8,12 +8,12 @@
 "use strict";
 
 var CORE_FILES =
-    "const.js config.js log.js lib.js cpu.js debug.js " +
+    "const.js config.js log.js lib.js buffer.js cpu.js debug.js " +
     "io.js main.js ide.js pci.js floppy.js " +
     "memory.js dma.js pit.js vga.js ps2.js pic.js rtc.js uart.js acpi.js apic.js ioapic.js hpet.js sb16.js " +
     "ne2k.js state.js virtio.js bus.js elf.js kernel.js";
 
-var BROWSER_FILES = "main.js screen.js keyboard.js mouse.js speaker.js serial.js lib.js network.js starter.js worker_bus.js print_stats.js filestorage.js";
+var BROWSER_FILES = "main.js screen.js keyboard.js mouse.js speaker.js serial.js network.js starter.js worker_bus.js print_stats.js filestorage.js";
 var LIB_FILES = "";
 
 // jor1k stuff
@@ -90,10 +90,10 @@ function load_next()
         <br>
         <input type="button" value="Windows 98" id="start_windows98">
         <input type="button" value="Windows 98 (boot)" id="start_windows98-boot">
+        <input type="button" value="Windows NT 3.1" id="start_windowsnt3">
+        <input type="button" value="Windows NT 4.0" id="start_windowsnt4">
         <input type="button" value="Windows 2000" id="start_windows2000">
         <input type="button" value="Windows 2000 (boot)" id="start_windows2000-boot">
-        <input type="button" value="Windows Me" id="start_windowsme">
-        <input type="button" value="Windows Me (2)" id="start_windowsme2">
         <br>
 
         <input type="button" value="Linux 2.6 (Buildroot)" id="start_linux26">
@@ -120,7 +120,6 @@ function load_next()
         <input type="button" value="SerenityOS" id="start_serenity">
         <input type="button" value="QNX" id="start_qnx">
         <input type="button" value="9front" id="start_9front">
-        <input type="button" value="Plan 9" id="start_plan9">
         <br>
 
         <input type="button" value="Oberon" id="start_oberon">
@@ -158,7 +157,7 @@ function load_next()
             </tr>
 
             <tr>
-                <td>Slave Hard drive disk image</td>
+                <td>Second hard drive disk image</td>
                 <td><input type="file" id="hdb_image"><br></td>
             </tr>
 
@@ -265,6 +264,7 @@ function load_next()
         <input type="button" value="Save State" id="save_state">
         <input type="button" value="Load State" id="load_state"> <input type="file" style="display: none" id="load_state_input">
         <input type="button" value="Memory Dump" id="memory_dump">
+        <input type="button" value="Capture network traffic" id="capture_network_traffic">
         <input type="button" value="Disable mouse" id="toggle_mouse">
         <input type="button" value="Lock mouse" id="lock_mouse">
         <input type="button" value="Go fullscreen" id="fullscreen">

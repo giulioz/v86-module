@@ -27,7 +27,7 @@ use cpu::fpu::fpu_set_tag_word;
 use cpu::global_pointers::*;
 use cpu::misc_instr::{
     adjust_stack_reg, bswap, cmovcc16, cmovcc32, fxrstor, fxsave, get_stack_pointer, jmpcc16,
-    jmpcc32, push16, push32, setcc_mem, setcc_reg, test_b, test_be, test_l, test_le, test_o,
+    jmpcc32, push16, push32_sreg, setcc_mem, setcc_reg, test_b, test_be, test_l, test_le, test_o,
     test_p, test_s, test_z,
 };
 use cpu::misc_instr::{lar, lsl, verr, verw};
@@ -449,7 +449,6 @@ pub unsafe fn instr_0F09() {
 }
 #[no_mangle]
 pub unsafe fn instr_0F0A() { undefined_instruction(); }
-#[no_mangle]
 pub unsafe fn instr_0F0B() {
     // UD2
     trigger_ud();
@@ -492,7 +491,6 @@ pub unsafe fn instr_660F10_reg(r1: i32, r2: i32) { instr_660F10(read_xmm128s(r1)
 pub unsafe fn instr_660F10_mem(addr: i32, r: i32) {
     instr_660F10(return_on_pagefault!(safe_read128s(addr)), r);
 }
-#[no_mangle]
 pub unsafe fn instr_F20F10_reg(r1: i32, r2: i32) {
     // movsd xmm, xmm/m64
     let data = read_xmm128s(r1);
@@ -529,7 +527,6 @@ pub unsafe fn instr_660F11_mem(addr: i32, r: i32) {
     // movupd xmm/m128, xmm
     mov_r_m128(addr, r);
 }
-#[no_mangle]
 pub unsafe fn instr_F20F11_reg(r1: i32, r2: i32) {
     // movsd xmm/m64, xmm
     let data = read_xmm128s(r2);
@@ -564,6 +561,7 @@ pub unsafe fn instr_F20F12_reg(_r1: i32, _r2: i32) { unimplemented_sse(); }
 pub unsafe fn instr_F30F12_mem(_addr: i32, _r: i32) { unimplemented_sse(); }
 #[no_mangle]
 pub unsafe fn instr_F30F12_reg(_r1: i32, _r2: i32) { unimplemented_sse(); }
+
 pub unsafe fn instr_0F13_mem(addr: i32, r: i32) {
     // movlps m64, xmm
     movl_r128_m64(addr, r);
@@ -574,6 +572,7 @@ pub unsafe fn instr_660F13_mem(addr: i32, r: i32) {
     // movlpd xmm/m64, xmm
     movl_r128_m64(addr, r);
 }
+
 #[no_mangle]
 pub unsafe fn instr_0F14(source: u64, r: i32) {
     // unpcklps xmm, xmm/m128
@@ -642,44 +641,38 @@ pub unsafe fn instr_660F15_reg(r1: i32, r2: i32) { instr_660F15(read_xmm128s(r1)
 pub unsafe fn instr_660F15_mem(addr: i32, r: i32) {
     instr_660F15(return_on_pagefault!(safe_read128s(addr)), r);
 }
+
 #[no_mangle]
+pub unsafe fn instr_0F16(source: u64, r: i32) { (*reg_xmm.offset(r as isize)).u64[1] = source; }
 pub unsafe fn instr_0F16_mem(addr: i32, r: i32) {
     // movhps xmm, m64
-    movh_m64_r128(addr, r);
+    instr_0F16(return_on_pagefault!(safe_read64s(addr)), r);
 }
-#[no_mangle]
 pub unsafe fn instr_0F16_reg(r1: i32, r2: i32) {
     // movlhps xmm, xmm
-    let data = read_xmm128s(r1);
-    let orig = read_xmm128s(r2);
-    write_xmm128_2(r2, orig.u64[0], data.u64[0]);
+    instr_0F16(read_xmm64s(r1), r2);
 }
-#[no_mangle]
 pub unsafe fn instr_660F16_mem(addr: i32, r: i32) {
     // movhpd xmm, m64
-    movh_m64_r128(addr, r);
+    instr_0F16(return_on_pagefault!(safe_read64s(addr)), r);
 }
-#[no_mangle]
 pub unsafe fn instr_660F16_reg(_r1: i32, _r2: i32) { trigger_ud(); }
 #[no_mangle]
 pub unsafe fn instr_F30F16_reg(_r1: i32, _r2: i32) { unimplemented_sse(); }
 #[no_mangle]
 pub unsafe fn instr_F30F16_mem(_addr: i32, _r: i32) { unimplemented_sse(); }
 
-#[no_mangle]
 pub unsafe fn instr_0F17_mem(addr: i32, r: i32) {
     // movhps m64, xmm
     movh_r128_m64(addr, r);
 }
-#[no_mangle]
 pub unsafe fn instr_0F17_reg(_r1: i32, _r2: i32) { trigger_ud(); }
-#[no_mangle]
 pub unsafe fn instr_660F17_mem(addr: i32, r: i32) {
     // movhpd m64, xmm
     movh_r128_m64(addr, r);
 }
-#[no_mangle]
 pub unsafe fn instr_660F17_reg(_r1: i32, _r2: i32) { trigger_ud(); }
+
 pub unsafe fn instr_0F18_reg(_r1: i32, _r2: i32) {
     // reserved nop
 }
@@ -842,6 +835,7 @@ pub unsafe fn instr_0F25() { undefined_instruction(); }
 pub unsafe fn instr_0F26() { undefined_instruction(); }
 #[no_mangle]
 pub unsafe fn instr_0F27() { undefined_instruction(); }
+
 pub unsafe fn instr_0F28(source: reg128, r: i32) {
     // movaps xmm, xmm/m128
     // XXX: Aligned read or #gp
@@ -1171,59 +1165,47 @@ pub unsafe fn instr_0F30() {
         dbg_log!("wrmsr ecx={:x} data={:x}:{:x}", index, high, low);
     }
 
-    if index == IA32_SYSENTER_CS {
-        *sysenter_cs = low & 0xFFFF
-    }
-    else if index == IA32_SYSENTER_EIP {
-        *sysenter_eip = low
-    }
-    else if index == IA32_SYSENTER_ESP {
-        *sysenter_esp = low
-    }
-    else if index == MSR_IA32_FEAT_CTL {
-        // linux 5.x
-    }
-    else if index == MSR_TEST_CTRL {
-        // linux 5.x
-    }
-    else if index == IA32_APIC_BASE_MSR {
-        dbg_assert!(
-            high == 0,
-            ("Changing APIC address (high 32 bits) not supported")
-        );
-        let address = low & !(IA32_APIC_BASE_BSP | IA32_APIC_BASE_EXTD | IA32_APIC_BASE_EN);
-        dbg_assert!(
-            address == APIC_ADDRESS,
-            ("Changing APIC address not supported")
-        );
-        dbg_assert!(low & IA32_APIC_BASE_EXTD == 0, "x2apic not supported");
-        *apic_enabled = low & IA32_APIC_BASE_EN == IA32_APIC_BASE_EN
-    }
-    else if index == IA32_TIME_STAMP_COUNTER {
-        set_tsc(low as u32, high as u32);
-    }
-    else if index == IA32_BIOS_SIGN_ID {
-        //
-    }
-    else if index == MSR_MISC_FEATURE_ENABLES {
-        // Linux 4, see: https://patchwork.kernel.org/patch/9528279/
-    }
-    else if index == IA32_MISC_ENABLE {
-        // Enable Misc. Processor Features
-    }
-    else if index == IA32_MCG_CAP {
-        // netbsd
-    }
-    else if index == IA32_KERNEL_GS_BASE {
-        // Only used in 64 bit mode (by SWAPGS), but set by kvm-unit-test
-        dbg_log!("GS Base written");
-    }
-    else if index == IA32_PAT {
-        //
-    }
-    else {
-        dbg_log!("Unknown msr: {:x}", index);
-        dbg_assert!(false);
+    match index {
+        IA32_SYSENTER_CS => *sysenter_cs = low & 0xFFFF,
+        IA32_SYSENTER_EIP => *sysenter_eip = low,
+        IA32_SYSENTER_ESP => *sysenter_esp = low,
+        IA32_FEAT_CTL => {}, // linux 5.x
+        MSR_TEST_CTRL => {}, // linux 5.x
+        IA32_APIC_BASE => {
+            dbg_assert!(
+                high == 0,
+                ("Changing APIC address (high 32 bits) not supported")
+            );
+            let address = low & !(IA32_APIC_BASE_BSP | IA32_APIC_BASE_EXTD | IA32_APIC_BASE_EN);
+            dbg_assert!(
+                address == APIC_ADDRESS,
+                ("Changing APIC address not supported")
+            );
+            dbg_assert!(low & IA32_APIC_BASE_EXTD == 0, "x2apic not supported");
+            *apic_enabled = low & IA32_APIC_BASE_EN == IA32_APIC_BASE_EN
+        },
+        IA32_TIME_STAMP_COUNTER => set_tsc(low as u32, high as u32),
+        IA32_BIOS_SIGN_ID => {},
+        MISC_FEATURE_ENABLES => {
+            // Linux 4, see: https://patchwork.kernel.org/patch/9528279/
+        },
+        IA32_MISC_ENABLE => {
+            // Enable Misc. Processor Features
+        },
+        IA32_MCG_CAP => {}, // netbsd
+        IA32_KERNEL_GS_BASE => {
+            // Only used in 64 bit mode (by SWAPGS), but set by kvm-unit-test
+            dbg_log!("GS Base written");
+        },
+        IA32_PAT => {},
+        IA32_SPEC_CTRL => {},      // linux 5.19
+        IA32_TSX_CTRL => {},       // linux 5.19
+        MSR_TSX_FORCE_ABORT => {}, // linux 5.19
+        IA32_MCU_OPT_CTRL => {},   // linux 5.19
+        _ => {
+            dbg_log!("Unknown msr: {:x}", index);
+            dbg_assert!(false);
+        },
     }
 }
 
@@ -1256,63 +1238,51 @@ pub unsafe fn instr_0F32() {
     let mut low: i32 = 0;
     let mut high: i32 = 0;
 
-    if index == IA32_SYSENTER_CS {
-        low = *sysenter_cs
-    }
-    else if index == IA32_SYSENTER_EIP {
-        low = *sysenter_eip
-    }
-    else if index == IA32_SYSENTER_ESP {
-        low = *sysenter_esp
-    }
-    else if index == IA32_TIME_STAMP_COUNTER {
-        let tsc = read_tsc();
-        low = tsc as i32;
-        high = (tsc >> 32) as i32
-    }
-    else if index == MSR_IA32_FEAT_CTL {
-        // linux 5.x
-    }
-    else if index == MSR_TEST_CTRL {
-        // linux 5.x
-    }
-    else if index == IA32_PLATFORM_ID {
-    }
-    else if index == IA32_APIC_BASE_MSR {
-        if *acpi_enabled {
-            low = APIC_ADDRESS;
-            if *apic_enabled {
-                low |= IA32_APIC_BASE_EN
+    match index {
+        IA32_SYSENTER_CS => low = *sysenter_cs,
+        IA32_SYSENTER_EIP => low = *sysenter_eip,
+        IA32_SYSENTER_ESP => low = *sysenter_esp,
+        IA32_TIME_STAMP_COUNTER => {
+            let tsc = read_tsc();
+            low = tsc as i32;
+            high = (tsc >> 32) as i32
+        },
+        IA32_FEAT_CTL => {}, // linux 5.x
+        MSR_TEST_CTRL => {}, // linux 5.x
+        IA32_PLATFORM_ID => {},
+        IA32_APIC_BASE => {
+            if *acpi_enabled {
+                low = APIC_ADDRESS;
+                if *apic_enabled {
+                    low |= IA32_APIC_BASE_EN
+                }
             }
-        }
-    }
-    else if index == IA32_BIOS_SIGN_ID {
-    }
-    else if index == MSR_PLATFORM_INFO {
-        low = 1 << 8
-    }
-    else if index == MSR_MISC_FEATURE_ENABLES {
-    }
-    else if index == IA32_MISC_ENABLE {
-        // Enable Misc. Processor Features
-        low = 1 << 0; // fast string
-    }
-    else if index == IA32_RTIT_CTL {
-        // linux4
-    }
-    else if index == MSR_SMI_COUNT {
-    }
-    else if index == IA32_MCG_CAP {
-        // netbsd
-    }
-    else if index == IA32_PAT {
-        //
-    }
-    else if index == MSR_PKG_C2_RESIDENCY {
-    }
-    else {
-        dbg_log!("Unknown msr: {:x}", index);
-        dbg_assert!(false);
+        },
+        IA32_BIOS_SIGN_ID => {},
+        MSR_PLATFORM_INFO => low = 1 << 8,
+        MISC_FEATURE_ENABLES => {},
+        IA32_MISC_ENABLE => {
+            // Enable Misc. Processor Features
+            low = 1 << 0; // fast string
+        },
+        IA32_RTIT_CTL => {
+            // linux4
+        },
+        MSR_SMI_COUNT => {},
+        IA32_MCG_CAP => {
+            // netbsd
+        },
+        IA32_PAT => {},
+        MSR_PKG_C2_RESIDENCY => {},
+        IA32_SPEC_CTRL => {},      // linux 5.19
+        IA32_TSX_CTRL => {},       // linux 5.19
+        MSR_TSX_FORCE_ABORT => {}, // linux 5.19
+        IA32_MCU_OPT_CTRL => {},   // linux 5.19
+        MSR_AMD64_LS_CFG => {},    // linux 5.19
+        _ => {
+            dbg_log!("Unknown msr: {:x}", index);
+            dbg_assert!(false);
+        },
     }
 
     write_reg32(EAX, low);
@@ -1347,6 +1317,7 @@ pub unsafe fn instr_0F34() {
         *segment_limits.offset(SS as isize) = -1i32 as u32;
         *segment_offsets.offset(SS as isize) = 0;
         *stack_size_32 = true;
+        update_state_flags();
         return;
     };
 }
@@ -1373,6 +1344,7 @@ pub unsafe fn instr_0F35() {
         *segment_limits.offset(SS as isize) = -1i32 as u32;
         *segment_offsets.offset(SS as isize) = 0;
         *stack_size_32 = true;
+        update_state_flags();
         return;
     };
 }
@@ -2258,7 +2230,6 @@ pub unsafe fn instr_0F62_reg(r1: i32, r2: i32) { instr_0F62(read_mmx32s(r1), r2)
 pub unsafe fn instr_0F62_mem(addr: i32, r: i32) {
     instr_0F62(return_on_pagefault!(safe_read32s(addr)), r);
 }
-#[no_mangle]
 pub unsafe fn instr_660F62(source: reg128, r: i32) {
     // punpckldq xmm, xmm/m128
     // XXX: Aligned access or #gp
@@ -2601,6 +2572,7 @@ pub unsafe fn instr_660F6D_reg(r1: i32, r2: i32) { instr_660F6D(read_xmm128s(r1)
 pub unsafe fn instr_660F6D_mem(addr: i32, r: i32) {
     instr_660F6D(return_on_pagefault!(safe_read128s(addr)), r);
 }
+
 #[no_mangle]
 pub unsafe fn instr_0F6E(source: i32, r: i32) {
     // movd mm, r/m32
@@ -2611,7 +2583,6 @@ pub unsafe fn instr_0F6E_reg(r1: i32, r2: i32) { instr_0F6E(read_reg32(r1), r2);
 pub unsafe fn instr_0F6E_mem(addr: i32, r: i32) {
     instr_0F6E(return_on_pagefault!(safe_read32s(addr)), r);
 }
-#[no_mangle]
 pub unsafe fn instr_660F6E(source: i32, r: i32) {
     // movd mm, r/m32
     write_xmm128(r, source, 0, 0, 0);
@@ -2663,7 +2634,6 @@ pub unsafe fn instr_0F70_reg(r1: i32, r2: i32, imm: i32) { instr_0F70(read_mmx64
 pub unsafe fn instr_0F70_mem(addr: i32, r: i32, imm: i32) {
     instr_0F70(return_on_pagefault!(safe_read64s(addr)), r, imm);
 }
-#[no_mangle]
 pub unsafe fn instr_660F70(source: reg128, r: i32, imm8: i32) {
     // pshufd xmm, xmm/mem128, imm8
     // XXX: Aligned access or #gp
@@ -2970,6 +2940,7 @@ pub unsafe fn instr_0F7B() { unimplemented_sse(); }
 pub unsafe fn instr_0F7C() { unimplemented_sse(); }
 #[no_mangle]
 pub unsafe fn instr_0F7D() { unimplemented_sse(); }
+
 #[no_mangle]
 pub unsafe fn instr_0F7E(r: i32) -> i32 {
     // movd r/m32, mm
@@ -2995,7 +2966,6 @@ pub unsafe fn instr_F30F7E_mem(addr: i32, r: i32) {
     let data = return_on_pagefault!(safe_read64s(addr));
     write_xmm128_2(r, data, 0);
 }
-#[no_mangle]
 pub unsafe fn instr_F30F7E_reg(r1: i32, r2: i32) {
     // movq xmm, xmm/mem64
     write_xmm128_2(r2, read_xmm64s(r1), 0);
@@ -3105,9 +3075,7 @@ pub unsafe fn instr_0F9F_mem(addr: i32, _: i32) { setcc_mem(!test_le(), addr); }
 pub unsafe fn instr16_0FA0() {
     return_on_pagefault!(push16(*sreg.offset(FS as isize) as i32));
 }
-pub unsafe fn instr32_0FA0() {
-    return_on_pagefault!(push32(*sreg.offset(FS as isize) as i32));
-}
+pub unsafe fn instr32_0FA0() { return_on_pagefault!(push32_sreg(FS)) }
 #[no_mangle]
 pub unsafe fn instr16_0FA1() {
     if !switch_seg(FS, return_on_pagefault!(safe_read16(get_stack_pointer(0)))) {
@@ -3143,18 +3111,12 @@ pub unsafe fn instr_0FA2() {
     let mut edx = 0;
     let mut ebx = 0;
 
-    let winnt_fix = false;
     let level = read_reg32(EAX) as u32;
 
     match level {
         0 => {
-            // maximum supported level
-            if winnt_fix {
-                eax = 2;
-            }
-            else {
-                eax = 0x16;
-            }
+            // maximum supported level (default 0x16, overwritten to 2 as a workaround for Windows NT)
+            eax = cpuid_level as i32;
 
             ebx = 0x756E6547 | 0; // Genu
             edx = 0x49656E69 | 0; // ineI
@@ -3224,10 +3186,12 @@ pub unsafe fn instr_0FA2() {
         },
 
         7 => {
-            eax = 0; // maximum supported sub-level
-            ebx = 1 << 9; // enhanced REP MOVSB/STOSB
-            ecx = 0;
-            edx = 0;
+            if read_reg32(ECX) == 0 {
+                eax = 0; // maximum supported sub-level
+                ebx = 1 << 9; // enhanced REP MOVSB/STOSB
+                ecx = 0;
+                edx = 0;
+            }
         },
 
         0x80000000 => {
@@ -3270,11 +3234,11 @@ pub unsafe fn instr_0FA2() {
         },
     }
 
-    if level == 4 {
+    if level == 4 || level == 7 {
         dbg_log!(
-            "cpuid: eax={:08x} cl={:02x}",
+            "cpuid: eax={:08x} ecx={:02x}",
             read_reg32(EAX),
-            read_reg8(CL),
+            read_reg32(ECX),
         );
     }
     else if level != 0 && level != 2 && level != 0x80000000 {
@@ -3330,9 +3294,7 @@ pub unsafe fn instr_0FA7() { undefined_instruction(); }
 pub unsafe fn instr16_0FA8() {
     return_on_pagefault!(push16(*sreg.offset(GS as isize) as i32));
 }
-pub unsafe fn instr32_0FA8() {
-    return_on_pagefault!(push32(*sreg.offset(GS as isize) as i32));
-}
+pub unsafe fn instr32_0FA8() { return_on_pagefault!(push32_sreg(GS)) }
 #[no_mangle]
 pub unsafe fn instr16_0FA9() {
     if !switch_seg(GS, return_on_pagefault!(safe_read16(get_stack_pointer(0)))) {
@@ -3757,6 +3719,8 @@ pub unsafe fn instr_0FC3_mem(addr: i32, r: i32) {
     // movnti
     return_on_pagefault!(safe_write32(addr, read_reg32(r)));
 }
+
+#[no_mangle]
 pub unsafe fn instr_0FC4(source: i32, r: i32, imm8: i32) {
     // pinsrw mm, r32/m16, imm8
     let mut destination: [u16; 4] = std::mem::transmute(read_mmx64s(r));
@@ -3764,9 +3728,7 @@ pub unsafe fn instr_0FC4(source: i32, r: i32, imm8: i32) {
     write_mmx_reg64(r, std::mem::transmute(destination));
     transition_fpu_to_mmx();
 }
-#[no_mangle]
 pub unsafe fn instr_0FC4_reg(r1: i32, r2: i32, imm: i32) { instr_0FC4(read_reg32(r1), r2, imm); }
-#[no_mangle]
 pub unsafe fn instr_0FC4_mem(addr: i32, r: i32, imm: i32) {
     instr_0FC4(return_on_pagefault!(safe_read16(addr)), r, imm);
 }
@@ -3777,15 +3739,12 @@ pub unsafe fn instr_660FC4(source: i32, r: i32, imm8: i32) {
     destination.u16[index as usize] = (source & 0xFFFF) as u16;
     write_xmm_reg128(r, destination);
 }
-#[no_mangle]
 pub unsafe fn instr_660FC4_reg(r1: i32, r2: i32, imm: i32) {
     instr_660FC4(read_reg32(r1), r2, imm);
 }
-#[no_mangle]
 pub unsafe fn instr_660FC4_mem(addr: i32, r: i32, imm: i32) {
     instr_660FC4(return_on_pagefault!(safe_read16(addr)), r, imm);
 }
-#[no_mangle]
 pub unsafe fn instr_0FC5_mem(_addr: i32, _r: i32, _imm8: i32) { trigger_ud(); }
 #[no_mangle]
 pub unsafe fn instr_0FC5_reg(r1: i32, r2: i32, imm8: i32) {
@@ -3794,9 +3753,7 @@ pub unsafe fn instr_0FC5_reg(r1: i32, r2: i32, imm8: i32) {
     write_reg32(r2, data[(imm8 & 3) as usize] as i32);
     transition_fpu_to_mmx();
 }
-#[no_mangle]
 pub unsafe fn instr_660FC5_mem(_addr: i32, _r: i32, _imm8: i32) { trigger_ud(); }
-#[no_mangle]
 pub unsafe fn instr_660FC5_reg(r1: i32, r2: i32, imm8: i32) {
     // pextrw r32, xmm, imm8
     let data = read_xmm128s(r1);
@@ -4021,6 +3978,7 @@ pub unsafe fn instr_660FD5_reg(r1: i32, r2: i32) { instr_660FD5(read_xmm128s(r1)
 pub unsafe fn instr_660FD5_mem(addr: i32, r: i32) {
     instr_660FD5(return_on_pagefault!(safe_read128s(addr)), r);
 }
+
 #[no_mangle]
 pub unsafe fn instr_0FD6_mem(_addr: i32, _r: i32) { trigger_ud(); }
 #[no_mangle]
@@ -4029,12 +3987,11 @@ pub unsafe fn instr_660FD6_mem(addr: i32, r: i32) {
     // movq xmm/m64, xmm
     movl_r128_m64(addr, r);
 }
-#[no_mangle]
 pub unsafe fn instr_660FD6_reg(r1: i32, r2: i32) {
     // movq xmm/m64, xmm
-    let data = read_xmm64s(r2);
-    write_xmm128_2(r1, data, 0);
+    write_xmm128_2(r1, read_xmm64s(r2), 0);
 }
+
 #[no_mangle]
 pub unsafe fn instr_F20FD6_mem(_addr: i32, _r: i32) { trigger_ud(); }
 #[no_mangle]
@@ -4052,6 +4009,7 @@ pub unsafe fn instr_F30FD6_reg(r1: i32, r2: i32) {
     write_xmm_reg128(r2, reg128 { u64: [source, 0] });
     transition_fpu_to_mmx();
 }
+
 pub unsafe fn instr_0FD7_mem(_addr: i32, _r: i32) { trigger_ud(); }
 #[no_mangle]
 pub unsafe fn instr_0FD7(r1: i32) -> i32 {

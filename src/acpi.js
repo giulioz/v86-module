@@ -1,5 +1,7 @@
 "use strict";
 
+import { v86 } from "./main";
+
 // http://www.uefi.org/sites/default/files/resources/ACPI_6_1.pdf
 
 /** @const */

@@ -196,6 +196,9 @@ export function VGAScreen(cpu, bus, vga_memory_size)
     this.latch_dword = 0;
 
     /** @type {number} */
+    this.svga_version = 0xB0C5;
+
+    /** @type {number} */
     this.svga_width = 0;
 
     /** @type {number} */
@@ -216,10 +219,12 @@ export function VGAScreen(cpu, bus, vga_memory_size)
      */
     this.svga_offset = 0;
 
+    const pci_revision = 0; // set to 2 for qemu extended registers
+
     // Experimental, could probably need some changes
     // 01:00.0 VGA compatible controller: NVIDIA Corporation GT216 [GeForce GT 220] (rev a2)
     this.pci_space = [
-        0x34, 0x12, 0x11, 0x11, 0x03, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+        0x34, 0x12, 0x11, 0x11, 0x03, 0x01, 0x00, 0x00, pci_revision, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
         0x08, VGA_LFB_ADDRESS >>> 8, VGA_LFB_ADDRESS >>> 16, VGA_LFB_ADDRESS >>> 24,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xbf, 0xfe, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf4, 0x1a, 0x00, 0x11,
@@ -2000,6 +2005,16 @@ VGAScreen.prototype.port1CF_write = function(value)
 
     switch(this.dispi_index)
     {
+        case 0:
+            if(value >= 0xB0C0 && value <= 0xB0C5)
+            {
+                this.svga_version = value;
+            }
+            else
+            {
+                dbg_log("Invalid version value: " + h(value), LOG_VGA);
+            }
+            break;
         case 1:
             this.svga_width = value;
             if(this.svga_width > MAX_XRES)
@@ -2025,7 +2040,7 @@ VGAScreen.prototype.port1CF_write = function(value)
             this.dispi_enable_value = value;
             break;
         case 5:
-            dbg_log("SVGA bank offset: " + h(value << 16));
+            dbg_log("SVGA bank offset: " + h(value << 16), LOG_VGA);
             this.svga_bank_offset = value << 16;
             break;
         case 9:
@@ -2082,8 +2097,7 @@ VGAScreen.prototype.svga_register_read = function(n)
     switch(n)
     {
         case 0:
-            // id
-            return 0xB0C0;
+            return this.svga_version;
         case 1:
             return this.dispi_enable_value & 2 ? MAX_XRES : this.svga_width;
         case 2:

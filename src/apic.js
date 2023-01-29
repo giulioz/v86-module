@@ -1,5 +1,7 @@
 "use strict";
 
+import { v86 } from "./main";
+
 // See Intel's System Programming Guide
 
 

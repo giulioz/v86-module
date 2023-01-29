@@ -1,7 +1,7 @@
 "use strict";
 
 import { LOG_SB16, MIXER_CHANNEL_BOTH, MIXER_CHANNEL_LEFT, MIXER_CHANNEL_RIGHT, MIXER_SRC_DAC, MIXER_SRC_MASTER, MIXER_SRC_PCSPEAKER } from "./const";
-import { ByteQueue, FloatQueue, h, SyncBuffer } from "./lib";
+import { ByteQueue, FloatQueue, h, v86util } from "./lib";
 import { dbg_log } from "./log";
 
 // Useful documentation, articles, and source codes for reference:
@@ -154,7 +154,7 @@ export function SB16(cpu, bus)
     this.dma_buffer_uint8 = new Uint8Array(this.dma_buffer);
     this.dma_buffer_int16 = new Int16Array(this.dma_buffer);
     this.dma_buffer_uint16 = new Uint16Array(this.dma_buffer);
-    this.dma_syncbuffer = new SyncBuffer(this.dma_buffer);
+    this.dma_syncbuffer = new v86util.SyncBuffer(this.dma_buffer);
     this.dma_waiting_transfer = false;
     this.dma_paused = false;
     this.sampling_rate = 22050;
@@ -403,7 +403,7 @@ SB16.prototype.set_state = function(state)
     this.dma_buffer_int8 = new Int8Array(this.dma_buffer);
     this.dma_buffer_int16 = new Int16Array(this.dma_buffer);
     this.dma_buffer_uint16 = new Uint16Array(this.dma_buffer);
-    this.dma_syncbuffer = new SyncBuffer(this.dma_buffer);
+    this.dma_syncbuffer = new v86util.SyncBuffer(this.dma_buffer);
 
     if(this.dma_paused)
     {

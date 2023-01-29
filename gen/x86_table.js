@@ -185,7 +185,7 @@ const encodings = [
     { opcode: 0x8A, custom: 1, e: 1, },
     { opcode: 0x8B, custom: 1, os: 1, e: 1, },
 
-    { opcode: 0x8C, os: 1, e: 1, custom: 1 }, // mov reg, sreg
+    { opcode: 0x8C, os: 1, e: 1, custom: 1, skip: 1 }, // mov reg, sreg
     { opcode: 0x8D, reg_ud: 1, os: 1, e: 1, custom_modrm_resolve: 1, custom: 1, }, // lea
     { opcode: 0x8E, block_boundary: 1, e: 1, skip: 1, }, // mov sreg
     { opcode: 0x8F, os: 1, e: 1, fixed_g: 0, custom_modrm_resolve: 1, custom: 1, block_boundary: 1, }, // pop r/m
@@ -203,8 +203,8 @@ const encodings = [
     { opcode: 0x99, os: 1, custom: 1 },
     { opcode: 0x9A, os: 1, imm1632: 1, extra_imm16: 1, skip: 1, block_boundary: 1, }, // callf
     { opcode: 0x9B, block_boundary: 1, skip: 1, }, // fwait: block_boundary since it uses non-raising cpu exceptions
-    { opcode: 0x9C, os: 1, custom: 1 },
-    { opcode: 0x9D, os: 1, skip: 1, custom: 1, },
+    { opcode: 0x9C, os: 1, custom: 1, skip: 1 }, // pushf
+    { opcode: 0x9D, os: 1, custom: 1, skip: 1 }, // popf
     { opcode: 0x9E, custom: 1 },
     { opcode: 0x9F, custom: 1 },
 
@@ -296,14 +296,14 @@ const encodings = [
     { opcode: 0xD9, e: 1, fixed_g: 6, custom: 1, is_fpu: 1, task_switch_test: 1, os: 1, skip: 1, }, // fstenv (mem), fprem (reg)
     { opcode: 0xD9, e: 1, fixed_g: 7, custom: 1, is_fpu: 1, task_switch_test: 1, os: 1, skip_reg: 1, }, // fprem, fyl2xp1 (precision issues)
 
-    { opcode: 0xDA, e: 1, fixed_g: 0, custom: 0, is_fpu: 1, task_switch_test: 1, },
-    { opcode: 0xDA, e: 1, fixed_g: 1, custom: 0, is_fpu: 1, task_switch_test: 1, },
-    { opcode: 0xDA, e: 1, fixed_g: 2, custom: 0, is_fpu: 1, task_switch_test: 1, },
-    { opcode: 0xDA, e: 1, fixed_g: 3, custom: 0, is_fpu: 1, task_switch_test: 1, },
-    { opcode: 0xDA, e: 1, fixed_g: 4, custom: 0, is_fpu: 1, task_switch_test: 1, },
+    { opcode: 0xDA, e: 1, fixed_g: 0, custom: 1, is_fpu: 1, task_switch_test: 1, },
+    { opcode: 0xDA, e: 1, fixed_g: 1, custom: 1, is_fpu: 1, task_switch_test: 1, },
+    { opcode: 0xDA, e: 1, fixed_g: 2, custom: 1, is_fpu: 1, task_switch_test: 1, },
+    { opcode: 0xDA, e: 1, fixed_g: 3, custom: 1, is_fpu: 1, task_switch_test: 1, },
+    { opcode: 0xDA, e: 1, fixed_g: 4, custom: 1, is_fpu: 1, task_switch_test: 1, },
     { opcode: 0xDA, e: 1, fixed_g: 5, custom: 1, is_fpu: 1, task_switch_test: 1, },
-    { opcode: 0xDA, e: 1, fixed_g: 6, custom: 0, is_fpu: 1, task_switch_test: 1, },
-    { opcode: 0xDA, e: 1, fixed_g: 7, custom: 0, is_fpu: 1, task_switch_test: 1, },
+    { opcode: 0xDA, e: 1, fixed_g: 6, custom: 1, is_fpu: 1, task_switch_test: 1, },
+    { opcode: 0xDA, e: 1, fixed_g: 7, custom: 1, is_fpu: 1, task_switch_test: 1, },
 
     { opcode: 0xDB, e: 1, fixed_g: 0, custom: 1, is_fpu: 1, task_switch_test: 1, },
     { opcode: 0xDB, e: 1, fixed_g: 1, custom: 0, is_fpu: 1, task_switch_test: 1, skip_mem: 1, }, // unimplemented: fisttp (sse3)
@@ -346,9 +346,9 @@ const encodings = [
     { opcode: 0xDF, e: 1, fixed_g: 2, custom: 1, is_fpu: 1, task_switch_test: 1 },
     { opcode: 0xDF, e: 1, fixed_g: 3, custom: 1, is_fpu: 1, task_switch_test: 1 },
     { opcode: 0xDF, e: 1, fixed_g: 4, custom: 1, is_fpu: 1, task_switch_test: 1, skip_mem: 1 }, // unimplemented: Binary Coded Decimals
-    { opcode: 0xDF, e: 1, fixed_g: 5, custom: 1, is_fpu: 1, task_switch_test: 1, },
-    { opcode: 0xDF, e: 1, fixed_g: 6, custom: 1, is_fpu: 1, task_switch_test: 1, skip_mem: 1 }, // unimplemented: Binary Coded Decimals
-    { opcode: 0xDF, e: 1, fixed_g: 7, custom: 1, is_fpu: 1, task_switch_test: 1, },
+    { opcode: 0xDF, e: 1, fixed_g: 5, custom: 1, is_fpu: 1, task_switch_test: 1 },
+    { opcode: 0xDF, e: 1, fixed_g: 6, custom: 1, is_fpu: 1, task_switch_test: 1 },
+    { opcode: 0xDF, e: 1, fixed_g: 7, custom: 1, is_fpu: 1, task_switch_test: 1 },
 
     // loop, jcxz, etc.
     { opcode: 0xE0, os: 1, imm8s: 1, no_block_boundary_in_interpreted: 1, skip: 1, block_boundary: 1, jump_offset_imm: 1, custom: 1, conditional_jump: 1, },
@@ -443,7 +443,7 @@ const encodings = [
     // Technically has a next instruction, but Linux uses this for assertions
     // and embeds the assertion message after this instruction, which is likely
     // the most common use case of ud2
-    { opcode: 0x0F0B, skip: 1, block_boundary: 1, no_next_instruction: 1, },
+    { opcode: 0x0F0B, skip: 1, block_boundary: 1, custom: 1, no_next_instruction: 1, },
     { opcode: 0x0F0C, skip: 1, block_boundary: 1, },
     { opcode: 0x0F0D, skip: 1, block_boundary: 1, },
     { opcode: 0x0F0E, skip: 1, block_boundary: 1, },
@@ -636,11 +636,11 @@ const encodings = [
     { sse: 1, opcode: 0x660F14, e: 1, custom: 1 },
     { sse: 1, opcode: 0x0F15, e: 1, custom: 1 },
     { sse: 1, opcode: 0x660F15, e: 1, custom: 1 },
-    { sse: 1, opcode: 0x0F16, e: 1 },
-    { sse: 1, opcode: 0x660F16, reg_ud: 1, e: 1 },
+    { sse: 1, opcode: 0x0F16, e: 1, custom: 1 },
+    { sse: 1, opcode: 0x660F16, reg_ud: 1, e: 1, custom: 1 },
     { sse: 1, opcode: 0xF30F16, skip: 1, e: 1, block_boundary: 1, }, // sse3
-    { sse: 1, opcode: 0x0F17, reg_ud: 1, e: 1 },
-    { sse: 1, opcode: 0x660F17, reg_ud: 1, e: 1 },
+    { sse: 1, opcode: 0x0F17, reg_ud: 1, e: 1, custom: 1 },
+    { sse: 1, opcode: 0x660F17, reg_ud: 1, e: 1, custom: 1 },
 
     { sse: 1, opcode: 0x0F28, e: 1, custom: 1 },
     { sse: 1, opcode: 0x660F28, e: 1, custom: 1 },
@@ -819,10 +819,10 @@ const encodings = [
 
     { opcode: 0x0FC3, e: 1, custom: 1, reg_ud: 1, }, // movnti: Uses normal registers, hence not marked as sse
 
-    { sse: 1, opcode: 0x0FC4, e: 1, imm8: 1 },
-    { sse: 1, opcode: 0x660FC4, e: 1, imm8: 1 },
-    { sse: 1, opcode: 0x0FC5, e: 1, mem_ud: 1, imm8: 1 },
-    { sse: 1, opcode: 0x660FC5, e: 1, mem_ud: 1, imm8: 1, },
+    { sse: 1, opcode: 0x0FC4, e: 1, imm8: 1, custom: 1 },
+    { sse: 1, opcode: 0x660FC4, e: 1, imm8: 1, custom: 1 },
+    { sse: 1, opcode: 0x0FC5, e: 1, mem_ud: 1, imm8: 1, custom: 1 },
+    { sse: 1, opcode: 0x660FC5, e: 1, mem_ud: 1, imm8: 1, custom: 1 },
 
     { sse: 1, opcode: 0x0FC6, e: 1, imm8: 1, custom: 1 },
     { sse: 1, opcode: 0x660FC6, e: 1, imm8: 1, custom: 1 },

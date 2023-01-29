@@ -126,13 +126,13 @@ function CPU(bus, wm, next_tick_immediately)
      * bitmap of flags which are not updated in the flags variable
      * changed by arithmetic instructions, so only relevant to arithmetic flags
      */
-    this.flags_changed = v86util.view(Int32Array, memory, 116, 1);
+    this.flags_changed = v86util.view(Int32Array, memory, 100, 1);
 
     /**
      * enough infos about the last arithmetic operation to compute eflags
      */
-    this.last_op1 = v86util.view(Int32Array, memory, 96, 1);
-    this.last_op_size = v86util.view(Int32Array, memory, 104, 1);
+    this.last_op_size = v86util.view(Int32Array, memory, 96, 1);
+    this.last_op1 = v86util.view(Int32Array, memory, 104, 1);
     this.last_result = v86util.view(Int32Array, memory, 112, 1);
 
     this.current_tsc = v86util.view(Uint32Array, memory, 960, 2); // 64 bit
@@ -300,9 +300,12 @@ CPU.prototype.wasm_patch = function()
 
     this.clear_tlb = get_import("clear_tlb");
     this.full_clear_tlb = get_import("full_clear_tlb");
+    this.update_state_flags = get_import("update_state_flags");
 
     this.set_tsc = get_import("set_tsc");
     this.store_current_tsc = get_import("store_current_tsc");
+
+    this.set_cpuid_level = get_import("set_cpuid_level");
 
     if(DEBUG)
     {
@@ -539,6 +542,8 @@ CPU.prototype.set_state = function(state)
     const packed_memory = state[77];
     this.unpack_memory(bitmap, packed_memory);
 
+    this.update_state_flags();
+
     this.full_clear_tlb();
 
     this.jit_clear_cache();
@@ -698,6 +703,8 @@ CPU.prototype.init = function(settings, device_bus)
     this.create_memory(typeof settings.memory_size === "number" ?
         settings.memory_size : 1024 * 1024 * 64);
 
+    settings.cpuid_level && this.set_cpuid_level(settings.cpuid_level);
+
     this.acpi_enabled[0] = +settings.acpi;
 
     this.reset_cpu();
@@ -846,11 +853,10 @@ CPU.prototype.init = function(settings, device_bus)
 
     if(DEBUG)
     {
-        // Use by linux for port-IO delay
-        // Avoid generating tons of debug messages
-        io.register_write(0x80, this, function(out_byte)
-        {
-        });
+        // Avoid logging noisey ports
+        io.register_write(0x80, this, function(out_byte) {});
+        io.register_read(0x80, this, function() { return 0xFF; });
+        io.register_write(0xE9, this, function(out_byte) {});
     }
 
     this.devices = {};
@@ -916,7 +922,7 @@ CPU.prototype.init = function(settings, device_bus)
 
         if(settings.enable_ne2k)
         {
-            this.devices.net = new Ne2k(this, device_bus, settings.preserve_mac_from_state_image);
+            this.devices.net = new Ne2k(this, device_bus, settings.preserve_mac_from_state_image, settings.mac_address_translation);
         }
 
         if(settings.fs9p)
@@ -1112,22 +1118,25 @@ CPU.prototype.load_multiboot = function(buffer)
             function() {});
 
         // only for kvm-unit-test
-        for(let i = 0xE; i <= 0xF; i++)
+        for(let i = 0; i <= 0xF; i++)
         {
-            this.io.register_write(0x2000 + i, this,
-                function(value)
+            function handle_write(value)
+            {
+                dbg_log("kvm-unit-test: Set irq " + h(i) + " to " + h(value, 2));
+                if(value)
                 {
-                    dbg_log("kvm-unit-test: Set irq " + h(i) + " to " + h(value, 2));
-                    if(value)
-                    {
-                        this.device_raise_irq(i);
-                    }
-                    else
-                    {
-                        this.device_lower_irq(i);
-                    }
-                });
+                    this.device_raise_irq(i);
+                }
+                else
+                {
+                    this.device_lower_irq(i);
+                }
+            }
+
+            this.io.register_write(0x2000 + i, this, handle_write, handle_write, handle_write);
         }
+
+        this.update_state_flags();
 
         dbg_log("Starting multiboot kernel at:", LOG_CPU);
         this.debug.dump_state();
@@ -1334,9 +1343,8 @@ CPU.prototype.codegen_finalize = function(wasm_table_index, start, state_flags, 
         const result = new WebAssembly.Instance(module, { "e": this.jit_imports });
         const f = result.exports["f"];
 
-        this.codegen_finalize_finished(wasm_table_index, start, state_flags);
-
         this.wm.wasm_table.set(wasm_table_index + WASM_TABLE_OFFSET, f);
+        this.codegen_finalize_finished(wasm_table_index, start, state_flags);
 
         if(this.test_hook_did_finalize_wasm)
         {
@@ -1349,9 +1357,8 @@ CPU.prototype.codegen_finalize = function(wasm_table_index, start, state_flags, 
     const result = WebAssembly.instantiate(code, { "e": this.jit_imports }).then(result => {
         const f = result.instance.exports["f"];
 
-        this.codegen_finalize_finished(wasm_table_index, start, state_flags);
-
         this.wm.wasm_table.set(wasm_table_index + WASM_TABLE_OFFSET, f);
+        this.codegen_finalize_finished(wasm_table_index, start, state_flags);
 
         if(this.test_hook_did_finalize_wasm)
         {

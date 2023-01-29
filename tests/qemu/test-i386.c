@@ -1050,7 +1050,7 @@ void test_fbcd(double a)
     double b;
 
     asm("fbstp %0" : "=m" (bcd[0]) : "t" (a) : "st");
-    asm("fbld %1" : "=t" (b) : "m" (bcd[0]));
+    //asm("fbld %1" : "=t" (b) : "m" (bcd[0]));
     printf("a=%f bcd=%04x%04x%04x%04x%04x b=%f\n",
            a, bcd[4], bcd[3], bcd[2], bcd[1], bcd[0], b);
 }
@@ -1180,8 +1180,20 @@ void test_floats(void)
     test_fcvt(1.0/0.0);
     test_fcvt(q_nan.d);
     test_fconst();
-    //test_fbcd(1234567890123456.0);
-    //test_fbcd(-123451234567890.0);
+    test_fbcd(0.0);
+    test_fbcd(-0.0);
+    test_fbcd(1.0);
+    test_fbcd(-1.0);
+    test_fbcd(1234567890123456.0);
+    test_fbcd(-123451234567890.0);
+    test_fbcd(341234567890123456.0);
+    test_fbcd(-345123451234567890.0);
+    test_fbcd(999999999999999900.0);
+    test_fbcd(-999999999999999900.0);
+    test_fbcd(1000000000000000000.0);
+    test_fbcd(-1000000000000000000.0);
+    test_fbcd(1000000000000000000000.0);
+    test_fbcd(-1000000000000000000000.0);
     test_fenv();
     if (TEST_CMOV) {
         test_fcmov();
@@ -1685,12 +1697,12 @@ uint8_t __attribute__((aligned (4096))) str_buffer[STR_BUFFER_SIZE];
 {\
     long esi, edi, eax, ecx, eflags, i;\
 \
-    for(i = 0; i < (count + 1) * size_bytes; i++)\
+    for(i = 0; i < (count + 1) * size_bytes; i++) {\
         str_buffer[sizeof(str_buffer)/2 + offset1 + i] = i + 0x56;\
         str_buffer[sizeof(str_buffer)/2 + offset1 - i - 1] = i + 0x97;\
         str_buffer[sizeof(str_buffer)/2 + offset2 + i] = i + 0xa5;\
         str_buffer[sizeof(str_buffer)/2 + offset2 - i - 1] = i + 0x3e;\
-\
+    }\
     esi = (long)(str_buffer + sizeof(str_buffer)/2 + offset1);\
     edi = (long)(str_buffer + sizeof(str_buffer)/2 + offset2);\
     eax = i2l(0x12345678);\

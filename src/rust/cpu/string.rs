@@ -19,9 +19,9 @@ use cpu::cpu::{
 };
 use cpu::global_pointers::{flags, instruction_pointer, previous_ip};
 use cpu::memory::{
-    in_mapped_range, memcpy_no_mmap_or_dirty_check, memset_no_mmap_or_dirty_check,
-    read8_no_mmap_check, read16_no_mmap_check, read32_no_mmap_check, write8_no_mmap_or_dirty_check,
-    write16_no_mmap_or_dirty_check, write32_no_mmap_or_dirty_check,
+    in_mapped_range, in_svga_lfb, memcpy_into_svga_lfb, memcpy_no_mmap_or_dirty_check,
+    memset_no_mmap_or_dirty_check, read8_no_mmap_check, read16_no_mmap_check, read32_no_mmap_check,
+    write8_no_mmap_or_dirty_check, write16_no_mmap_or_dirty_check, write32_no_mmap_or_dirty_check,
 };
 use page::Page;
 
@@ -34,7 +34,7 @@ fn count_until_end_of_page(direction: i32, size: i32, addr: u32) -> u32 {
     }) as u32
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 enum Instruction {
     Movs,
     Lods,
@@ -135,7 +135,9 @@ unsafe fn string_instruction(
     };
 
     let is_aligned = (ds + src) & (size_bytes - 1) == 0 && (es + dst) & (size_bytes - 1) == 0;
-    let mut rep_fast = is_aligned
+
+    // unaligned movs is properly handled in the fast path
+    let mut rep_fast = (instruction == Instruction::Movs || is_aligned)
         && is_asize_32 // 16-bit address wraparound
         && match rep {
             Rep::NZ | Rep::Z => true,
@@ -146,9 +148,20 @@ unsafe fn string_instruction(
     let mut phys_src = 0;
     let mut skip_dirty_page = false;
 
-    if rep_fast {
+    let mut movs_into_svga_lfb = false;
+    let mut movs_reenter_fast_path = false;
+
+    let count_until_end_of_page = if rep_fast {
         match instruction {
-            Instruction::Movs | Instruction::Stos | Instruction::Ins => {
+            Instruction::Movs => {
+                let (addr, skip) =
+                    return_on_pagefault!(translate_address_write_and_can_skip_dirty(es + dst));
+                movs_into_svga_lfb = in_svga_lfb(addr);
+                rep_fast = rep_fast && (!in_mapped_range(addr) || movs_into_svga_lfb);
+                phys_dst = addr;
+                skip_dirty_page = skip;
+            },
+            Instruction::Stos | Instruction::Ins => {
                 let (addr, skip) =
                     return_on_pagefault!(translate_address_write_and_can_skip_dirty(es + dst));
                 rep_fast = rep_fast && !in_mapped_range(addr);
@@ -173,18 +186,6 @@ unsafe fn string_instruction(
             _ => {},
         };
 
-        match instruction {
-            Instruction::Movs => {
-                // note: This check is also valid for both direction == 1 and direction == -1
-                let overlap = u32::max(phys_src, phys_dst) - u32::min(phys_src, phys_dst)
-                    < count * size_bytes as u32;
-                rep_fast = rep_fast && !overlap;
-            },
-            _ => {},
-        }
-    }
-
-    if rep_fast {
         let count_until_end_of_page = u32::min(
             count,
             match instruction {
@@ -200,6 +201,41 @@ unsafe fn string_instruction(
                 },
             },
         );
+
+        match instruction {
+            Instruction::Movs => {
+                let c = count_until_end_of_page * size_bytes as u32;
+
+                let overlap_interferes = if phys_src < phys_dst {
+                    // backward moves may overlap at the front of the destination string
+                    phys_dst - phys_src < c && direction == 1
+                }
+                else if phys_src > phys_dst {
+                    // forward moves may overlap at the front of the source string
+                    phys_src - phys_dst < c && direction == -1
+                }
+                else {
+                    false
+                };
+                rep_fast = rep_fast && !overlap_interferes;
+
+                // In case the following page-boundary check fails, re-enter instruction after
+                // one iteration of the slow path
+                movs_reenter_fast_path = rep_fast;
+                rep_fast = rep_fast
+                    && (phys_src & 0xFFF <= 0x1000 - size_bytes as u32)
+                    && (phys_dst & 0xFFF <= 0x1000 - size_bytes as u32);
+            },
+            _ => {},
+        }
+
+        count_until_end_of_page
+    }
+    else {
+        0 // not used
+    };
+
+    if rep_fast {
         dbg_assert!(count_until_end_of_page > 0);
 
         if !skip_dirty_page {
@@ -256,11 +292,21 @@ unsafe fn string_instruction(
                         phys_src -= (count_until_end_of_page - 1) * size_bytes as u32;
                         phys_dst -= (count_until_end_of_page - 1) * size_bytes as u32;
                     }
-                    memcpy_no_mmap_or_dirty_check(
-                        phys_src,
-                        phys_dst,
-                        count_until_end_of_page * size_bytes as u32,
-                    );
+                    if movs_into_svga_lfb {
+                        ::cpu::vga::mark_dirty(phys_dst);
+                        memcpy_into_svga_lfb(
+                            phys_src,
+                            phys_dst,
+                            count_until_end_of_page * size_bytes as u32,
+                        );
+                    }
+                    else {
+                        memcpy_no_mmap_or_dirty_check(
+                            phys_src,
+                            phys_dst,
+                            count_until_end_of_page * size_bytes as u32,
+                        );
+                    }
                     i = count_until_end_of_page;
                     break;
                 },
@@ -400,23 +446,27 @@ unsafe fn string_instruction(
                 _ => {},
             };
 
+            count -= 1;
+
             let finished = match rep {
-                Rep::Z | Rep::NZ => {
-                    let rep_cmp = match (rep, instruction) {
-                        (Rep::Z, Instruction::Cmps) => src_val == dst_val,
-                        (Rep::Z, Instruction::Scas) => src_val == dst_val,
-                        (Rep::NZ, Instruction::Cmps) => src_val != dst_val,
-                        (Rep::NZ, Instruction::Scas) => src_val != dst_val,
-                        _ => true,
-                    };
-                    count -= 1;
-                    if count != 0 && rep_cmp {
-                        //*instruction_pointer = *previous_ip
-                        false
-                    }
-                    else {
-                        true
-                    }
+                Rep::Z | Rep::NZ => match (rep, instruction) {
+                    (Rep::Z, Instruction::Cmps) => src_val != dst_val || count == 0,
+                    (Rep::Z, Instruction::Scas) => src_val != dst_val || count == 0,
+                    (Rep::NZ, Instruction::Cmps) => src_val == dst_val || count == 0,
+                    (Rep::NZ, Instruction::Scas) => src_val == dst_val || count == 0,
+                    (Rep::NZ | Rep::Z, Instruction::Movs) => {
+                        if count == 0 {
+                            true
+                        }
+                        else if movs_reenter_fast_path {
+                            *instruction_pointer = *previous_ip;
+                            true
+                        }
+                        else {
+                            false
+                        }
+                    },
+                    _ => count == 0,
                 },
                 Rep::None => true,
             };

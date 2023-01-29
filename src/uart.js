@@ -71,7 +71,7 @@ function UART(cpu, port, bus)
 
     this.input = new ByteQueue(4096);
 
-    this.current_line = [];
+    this.current_line = "";
 
     switch(port)
     {
@@ -122,6 +122,12 @@ function UART(cpu, port, bus)
         }
         else
         {
+            if((this.ier & UART_IIR_THRI) === 0 && (out_byte & UART_IIR_THRI))
+            {
+                // re-throw THRI if it was masked
+                this.ThrowInterrupt(UART_IIR_THRI);
+            }
+
             this.ier = out_byte & 0xF;
             dbg_log("interrupt enable: " + h(out_byte), LOG_SERIAL);
             this.CheckInterrupt();
@@ -151,6 +157,7 @@ function UART(cpu, port, bus)
             {
                 this.lsr &= ~UART_LSR_DATA_READY;
                 this.ClearInterrupt(UART_IIR_CTI);
+                this.ClearInterrupt(UART_IIR_RDI);
             }
 
             return data;
@@ -171,12 +178,14 @@ function UART(cpu, port, bus)
 
     io.register_read(port | 2, this, function()
     {
-        var ret = this.iir & 0xF | 0xC0;
+        var ret = this.iir & 0xF;
         dbg_log("read interrupt identification: " + h(this.iir), LOG_SERIAL);
 
         if (this.iir == UART_IIR_THRI) {
             // this.ClearInterrupt(UART_IIR_THRI);
         }
+
+        if(this.fifo_control & 1) ret |= 0xC0;
 
         return ret;
     });
@@ -277,6 +286,10 @@ UART.prototype.CheckInterrupt = function() {
         this.iir = UART_IIR_CTI;
         this.cpu.device_raise_irq(this.irq);
     } else
+    if ((this.ints & (1 << UART_IIR_RDI))  && (this.ier & UART_IER_RDI)) {
+        this.iir = UART_IIR_RDI;
+        this.cpu.device_raise_irq(this.irq);
+    } else
     if ((this.ints & (1 << UART_IIR_THRI)) && (this.ier & UART_IER_THRI)) {
         this.iir = UART_IIR_THRI;
         this.cpu.device_raise_irq(this.irq);
@@ -309,7 +322,15 @@ UART.prototype.data_received = function(data)
     this.input.push(data);
 
     this.lsr |= UART_LSR_DATA_READY;
-    this.ThrowInterrupt(UART_IIR_CTI);
+
+    if(this.fifo_control & 1)
+    {
+        this.ThrowInterrupt(UART_IIR_CTI);
+    }
+    else
+    {
+        this.ThrowInterrupt(UART_IIR_RDI);
+    }
 };
 
 UART.prototype.write_data = function(out_byte)
@@ -333,14 +354,16 @@ UART.prototype.write_data = function(out_byte)
 
     this.bus.send("serial" + this.com + "-output-char", char);
 
-    this.current_line.push(out_byte);
-
-    if(char === "\n")
+    if(DEBUG)
     {
-        const line = String.fromCharCode.apply("", this.current_line).trimRight().replace(/[\x00-\x08\x0b-\x1f\x7f\x80-\xff]/g, "");
-        dbg_log("SERIAL: " + line);
-        this.bus.send("serial" + this.com + "-output-line", String.fromCharCode.apply("", this.current_line));
-        this.current_line = [];
+        this.current_line += char;
+
+        if(char === "\n")
+        {
+            const line = this.current_line.trimRight().replace(/[\x00-\x08\x0b-\x1f\x7f\x80-\xff]/g, "");
+            dbg_log("SERIAL: " + line);
+            this.current_line = "";
+        }
     }
 };
 

@@ -78,7 +78,7 @@ CARGO_FLAGS_SAFE=\
 
 CARGO_FLAGS=$(CARGO_FLAGS_SAFE) -C target-feature=+bulk-memory
 
-CORE_FILES=const.js config.js io.js main.js lib.js ide.js pci.js floppy.js \
+CORE_FILES=const.js config.js io.js main.js lib.js buffer.js ide.js pci.js floppy.js \
 	   memory.js dma.js pit.js vga.js ps2.js pic.js rtc.js uart.js hpet.js \
 	   acpi.js apic.js ioapic.js \
 	   state.js ne2k.js sb16.js virtio.js bus.js log.js \
@@ -86,7 +86,7 @@ CORE_FILES=const.js config.js io.js main.js lib.js ide.js pci.js floppy.js \
 	   elf.js kernel.js
 LIB_FILES=9p.js filesystem.js jor1k.js marshall.js utf8.js
 BROWSER_FILES=screen.js keyboard.js mouse.js speaker.js serial.js \
-	      network.js lib.js starter.js worker_bus.js dummy_screen.js \
+	      network.js starter.js worker_bus.js dummy_screen.js \
 	      print_stats.js filestorage.js
 
 RUST_FILES=$(shell find src/rust/ -name '*.rs') \
@@ -134,6 +134,7 @@ build/libv86.js: $(CLOSURE) src/*.js lib/*.js src/browser/*.js
 		--define=DEBUG=false\
 		$(CLOSURE_FLAGS)\
 		--compilation_level SIMPLE\
+		--jscomp_off=missingProperties\
 		--output_wrapper ';(function(){%output%}).call(this);'\
 		--js $(CORE_FILES)\
 		--js $(BROWSER_FILES)\
@@ -148,6 +149,7 @@ build/libv86-debug.js: $(CLOSURE) src/*.js lib/*.js src/browser/*.js
 		$(CLOSURE_FLAGS)\
 		$(CLOSURE_READABLE)\
 		--compilation_level SIMPLE\
+		--jscomp_off=missingProperties\
 		--output_wrapper ';(function(){%output%}).call(this);'\
 		--js $(CORE_FILES)\
 		--js $(BROWSER_FILES)\
@@ -172,7 +174,7 @@ build/v86.wasm: $(RUST_FILES) build/softfloat.o build/zstddeclib.o Cargo.toml
 	mkdir -p build/
 	-BLOCK_SIZE=K ls -l build/v86.wasm
 	cargo rustc --release $(CARGO_FLAGS)
-	mv build/wasm32-unknown-unknown/release/v86.wasm build/v86.wasm
+	cp build/wasm32-unknown-unknown/release/v86.wasm build/v86.wasm
 	-$(WASM_OPT) && wasm-opt -O2 --strip-debug build/v86.wasm -o build/v86.wasm
 	BLOCK_SIZE=K ls -l build/v86.wasm
 
@@ -180,23 +182,23 @@ build/v86-debug.wasm: $(RUST_FILES) build/softfloat.o build/zstddeclib.o Cargo.t
 	mkdir -p build/
 	-BLOCK_SIZE=K ls -l build/v86-debug.wasm
 	cargo rustc $(CARGO_FLAGS)
-	mv build/wasm32-unknown-unknown/debug/v86.wasm build/v86-debug.wasm
+	cp build/wasm32-unknown-unknown/debug/v86.wasm build/v86-debug.wasm
 	BLOCK_SIZE=K ls -l build/v86-debug.wasm
 
 build/v86-fallback.wasm: $(RUST_FILES) build/softfloat.o build/zstddeclib.o Cargo.toml
 	mkdir -p build/
 	cargo rustc --release $(CARGO_FLAGS_SAFE)
-	mv build/wasm32-unknown-unknown/release/v86.wasm build/v86-fallback.wasm || true
+	cp build/wasm32-unknown-unknown/release/v86.wasm build/v86-fallback.wasm || true
 
 debug-with-profiler: $(RUST_FILES) build/softfloat.o build/zstddeclib.o Cargo.toml
 	mkdir -p build/
 	cargo rustc --features profiler $(CARGO_FLAGS)
-	mv build/wasm32-unknown-unknown/debug/v86.wasm build/v86-debug.wasm || true
+	cp build/wasm32-unknown-unknown/debug/v86.wasm build/v86-debug.wasm || true
 
 with-profiler: $(RUST_FILES) build/softfloat.o build/zstddeclib.o Cargo.toml
 	mkdir -p build/
 	cargo rustc --release --features profiler $(CARGO_FLAGS)
-	mv build/wasm32-unknown-unknown/release/v86.wasm build/v86.wasm || true
+	cp build/wasm32-unknown-unknown/release/v86.wasm build/v86.wasm || true
 
 build/softfloat.o: lib/softfloat/softfloat.c
 	mkdir -p build
@@ -241,7 +243,8 @@ update_version:
 
 $(CLOSURE):
 	mkdir -p $(CLOSURE_DIR)
-	wget -nv -O $(CLOSURE) https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/v20220104/closure-compiler-v20220104.jar
+	# don't upgrade until https://github.com/google/closure-compiler/issues/3972 is fixed
+	wget -nv -O $(CLOSURE) https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/v20210601/closure-compiler-v20210601.jar
 
 build/integration-test-fs/fs.json:
 	mkdir -p build/integration-test-fs/flat
@@ -255,7 +258,7 @@ build/integration-test-fs/fs.json:
 tests: all-debug build/integration-test-fs/fs.json
 	./tests/full/run.js
 
-tests-release: all build/integration-test-fs/fs.json
+tests-release: build/libv86.js build/v86.wasm build/integration-test-fs/fs.json
 	TEST_RELEASE_BUILD=1 ./tests/full/run.js
 
 nasmtests: all-debug
@@ -278,7 +281,7 @@ qemutests: all-debug
 	./tests/qemu/run-qemu.js > build/qemu-test-reference
 	diff build/qemu-test-result build/qemu-test-reference
 
-qemutests-release: all
+qemutests-release: build/libv86.js build/v86.wasm
 	$(MAKE) -C tests/qemu test-i386
 	TEST_RELEASE_BUILD=1 time ./tests/qemu/run.js > build/qemu-test-result
 	./tests/qemu/run-qemu.js > build/qemu-test-reference
@@ -288,7 +291,7 @@ kvm-unit-test: all-debug
 	(cd tests/kvm-unit-tests && ./configure && make x86/realmode.flat)
 	tests/kvm-unit-tests/run.js tests/kvm-unit-tests/x86/realmode.flat
 
-kvm-unit-test-release: all
+kvm-unit-test-release: build/libv86.js build/v86.wasm
 	(cd tests/kvm-unit-tests && ./configure && make x86/realmode.flat)
 	TEST_RELEASE_BUILD=1 tests/kvm-unit-tests/run.js tests/kvm-unit-tests/x86/realmode.flat
 

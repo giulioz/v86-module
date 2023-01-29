@@ -3,6 +3,7 @@
 import { LOG_RTC } from "./const";
 import { h } from "./lib";
 import { dbg_assert, dbg_log } from "./log";
+import { v86 } from "./main";
 
 /** @const */ export var CMOS_RTC_SECONDS = 0x00;
 /** @const */ export var CMOS_RTC_SECONDS_ALARM = 0x01;
@@ -246,6 +247,13 @@ RTC.prototype.cmos_port_read = function()
             return this.encode_time(new Date(this.rtc_time).getUTCFullYear() % 100);
 
         case CMOS_STATUS_A:
+            if(v86.microtick() % 1000 >= 999)
+            {
+                // Set update-in-progress for one millisecond every second (we
+                // may not have precision higher than that in browser
+                // environments)
+                return this.cmos_a | 0x80;
+            }
             return this.cmos_a;
         case CMOS_STATUS_B:
             //dbg_log("cmos read from index " + h(index));

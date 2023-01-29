@@ -72,7 +72,7 @@ main();
 
 ## Original Readme
 
-[![Join the chat at https://gitter.im/copy/v86](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/copy/v86)
+[![Join the chat at https://gitter.im/copy/v86](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/copy/v86) or #v86 on [irc.libera.chat](https://libera.chat/)
 
 v86 emulates an x86-compatible CPU and hardware. Machine code is translated to
 WebAssembly modules at runtime in order to achieve decent performance. Here's a
@@ -123,6 +123,16 @@ list of emulated hardware:
 [KolibriOS](https://copy.sh/v86/?profile=kolibrios) —
 [QNX](https://copy.sh/v86/?profile=qnx)
 
+## Docs
+
+[How it works](docs/how-it-works.md) —
+[Networking](docs/networking.md) —
+[Archlinux guest setup](docs/archlinux.md) —
+[Windows 2000/XP guest setup](docs/windows-xp.md) —
+[9p filesystem](docs/filesystem.md) —
+[Linux rootfs on 9p](docs/linux-9p-image.md) —
+[Profiling](docs/profiling.md)
+
 ## Compatibility
 
 Here's an overview of the operating systems supported in v86:
@@ -133,6 +143,7 @@ Here's an overview of the operating systems supported in v86:
   - [Buildroot](https://buildroot.uclibc.org) can be used to build a minimal image.
     [humphd/browser-vm](https://github.com/humphd/browser-vm) and
     [darin755/browser-buildroot](https://github.com/Darin755/browser-buildroot) have some useful scripts for building one.
+  - [SkiffOS](https://github.com/skiffos/SkiffOS/tree/master/configs/browser/v86) (based on Buildroot) can cross-compile a custom image.
   - Archlinux works. See [archlinux.md](docs/archlinux.md) for building an image.
   - Debian works. An image can be built from a Dockerfile, see [tools/docker/debian/](tools/docker/debian/).
   - Ubuntu up to 16.04 works.
@@ -154,7 +165,7 @@ Here's an overview of the operating systems supported in v86:
 - OpenBSD works with a specific boot configuration. At the `boot>` prompt type
   `boot -c`, then at the `UKC>` prompt `disable mpbios` and `exit`.
 - NetBSD works only with a custom kernel, see [#350](https://github.com/copy/v86/issues/350).
-- Older versions of SerenityOS work (1.0.gc460f4a is a known working version).
+- SerenityOS works.
 
 You can get some infos on the disk images here: https://github.com/copy/images.
 

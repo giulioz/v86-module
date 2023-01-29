@@ -30,11 +30,10 @@ const TEST_DIR = __dirname + "/build/";
 const DONE_MSG = "DONE";
 const TERMINATE_MSG = "DONE";
 
-const FORCE_JIT = process.argv.includes("--force-jit");
+const BSS = 0x100000;
+const STACK_TOP = 0x102000;
 
-// see --section-start= in makefile
-const V86_TEXT_OFFSET = 0x8000;
-const NASM_TEXT_OFFSET = 0x800000;
+const FORCE_JIT = process.argv.includes("--force-jit");
 
 // alternative representation for infinity for json
 const JSON_POS_INFINITY = "+INFINITY";
@@ -370,7 +369,7 @@ else {
         const evaluated_fpu_regs = new Float64Array(8).map((_, i) => cpu.fpu_get_sti_f64(i));
         const evaluated_mmxs = new Int32Array(16).map((_, i) => cpu.fpu_st[(i & ~1) << 1 | (i & 1)]);
         const evaluated_xmms = cpu.reg_xmm32s;
-        const evaluated_memory = new Int32Array(cpu.mem8.slice(0x120000 - 16 * 4, 0x120000).buffer);
+        const evaluated_memory = new Int32Array(cpu.mem8.buffer, cpu.mem8.byteOffset + BSS, STACK_TOP - BSS >> 2);
         const evaluated_fpu_tag = cpu.fpu_load_tag_word();
         const evaluated_fpu_status = cpu.fpu_load_status_word() & FPU_STATUS_MASK;
 
@@ -392,10 +391,15 @@ else {
             current_test.fixture.array.slice(offset, offset += 8) .map(x => x in FLOAT_TRANSLATION ? FLOAT_TRANSLATION[x] : x);
         const expected_mmx_registers = current_test.fixture.array.slice(offset, offset += 16);
         const expected_xmm_registers = current_test.fixture.array.slice(offset, offset += 32);
-        const expected_memory = current_test.fixture.array.slice(offset, offset += 16);
+        const expected_memory = current_test.fixture.array.slice(offset, offset += 8192 / 4);
         const expected_eflags = current_test.fixture.array[offset++] & MASK_ARITH;
         const fpu_tag = current_test.fixture.array[offset++];
         const fpu_status = current_test.fixture.array[offset++] & FPU_STATUS_MASK;
+
+        if(offset !== current_test.fixture.array.length)
+        {
+            throw new Error("Bad fixture length in test " + current_test.img_name);
+        }
 
         if(!current_test.fixture.exception)
         {
@@ -458,7 +462,7 @@ else {
             for (let i = 0; i < evaluated_memory.length; i++) {
                 if (evaluated_memory[i] !== expected_memory[i]) {
                     individual_failures.push({
-                        name: "mem[" + i + "]",
+                        name: "mem[" + (BSS + 4 * i).toString(16).toUpperCase() + "]",
                         expected: expected_memory[i],
                         actual: evaluated_memory[i],
                     });
@@ -479,12 +483,12 @@ else {
         if(current_test.fixture.exception)
         {
             const seen_eip = (recorded_exceptions[0] || {}).eip;
-            if(seen_eip - V86_TEXT_OFFSET !== expected_eip - NASM_TEXT_OFFSET)
+            if(seen_eip !== expected_eip)
             {
                 individual_failures.push({
                     name: "exception eip",
-                    expected: expected_eip - NASM_TEXT_OFFSET,
-                    actual: seen_eip === undefined ? "(none)" : seen_eip - V86_TEXT_OFFSET,
+                    expected: expected_eip,
+                    actual: seen_eip === undefined ? "(none)" : seen_eip,
                 });
             }
         }

@@ -12,7 +12,7 @@ function v86(bus, wasm)
     this.running = false;
 
     /** @type {boolean} */
-    this.stopped = false;
+    this.stopping = false;
 
     this.tick_counter = 0;
     this.worker = null;
@@ -31,7 +31,7 @@ function v86(bus, wasm)
 
 v86.prototype.run = function()
 {
-    this.stopped = false;
+    this.stopping = false;
 
     if(!this.running)
     {
@@ -44,9 +44,9 @@ v86.prototype.run = function()
 
 v86.prototype.do_tick = function()
 {
-    if(this.stopped || !this.running)
+    if(this.stopping || !this.running)
     {
-        this.stopped = this.running = false;
+        this.stopping = this.running = false;
         this.bus.send("emulator-stopped");
         return;
     }
@@ -76,7 +76,7 @@ v86.prototype.stop = function()
 {
     if(this.running)
     {
-        this.stopped = true;
+        this.stopping = true;
     }
 };
 

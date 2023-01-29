@@ -3,7 +3,7 @@
 import { Bus } from "../bus";
 import { DEBUG } from "../config";
 import { WASM_TABLE_OFFSET, WASM_TABLE_SIZE } from "../const";
-import { SyncBuffer, v86util } from "../lib";
+import { v86util } from "../lib";
 import { dbg_assert, dbg_log, dbg_trace } from "../log";
 import { v86 } from "../main";
 import { NetworkAdapter } from "./network";
@@ -156,7 +156,7 @@ export function V86Starter(options)
             console.error(str);
         },
         "dbg_trace_from_wasm": function() {
-            dbg_trace();
+            dbg_trace(LOG_CPU);
         },
 
         "codegen_finalize": (wasm_table_index, start, state_flags, ptr, len) => {
@@ -197,23 +197,22 @@ export function V86Starter(options)
                 }
 
                 v86util.load_file(v86_bin, {
-                    done: bytes =>
+                    done: async bytes =>
                     {
-                        WebAssembly
-                            .instantiate(bytes, env)
-                            .then(({ instance }) => {
-                                resolve(instance.exports);
-                            }, err => {
-                                v86util.load_file(v86_bin_fallback, {
-                                    done: bytes => {
-                                        WebAssembly
-                                            .instantiate(bytes, env)
-                                            .then(({ instance }) => {
-                                                resolve(instance.exports);
-                                            });
+                        try
+                        {
+                            const { instance } = await WebAssembly.instantiate(bytes, env);
+                            resolve(instance.exports);
+                        }
+                        catch(err)
+                        {
+                            v86util.load_file(v86_bin_fallback, {
+                                    done: async bytes => {
+                                        const { instance } = await WebAssembly.instantiate(bytes, env);
+                                        resolve(instance.exports);
                                     },
                                 });
-                            });
+                        }
                     },
                     progress: e =>
                     {
@@ -280,6 +279,8 @@ V86Starter.prototype.continue_init = async function(emulator, options)
     settings.uart3 = options["uart3"];
     settings.cmdline = options["cmdline"];
     settings.preserve_mac_from_state_image = options["preserve_mac_from_state_image"];
+    settings.mac_address_translation = options["mac_address_translation"];
+    settings.cpuid_level = options["cpuid_level"];
 
     if(options["network_adapter"])
     {
@@ -385,7 +386,7 @@ V86Starter.prototype.continue_init = async function(emulator, options)
             return;
         }
 
-        if(file["get"] && file["set"] && file["load"])
+        if(file.get && file.set && file.load)
         {
             files_to_load.push({
                 name: name,
@@ -393,17 +394,6 @@ V86Starter.prototype.continue_init = async function(emulator, options)
             });
             return;
         }
-
-        // Anything coming from the outside world needs to be quoted for
-        // Closure Compiler compilation
-        file = {
-            buffer: file["buffer"],
-            async: file["async"],
-            url: file["url"],
-            size: file["size"],
-            fixed_chunk_size: file["fixed_chunk_size"],
-            use_parts: file.use_parts,
-        };
 
         if(name === "bios" || name === "vga_bios" ||
             name === "initial_state" || name === "multiboot" ||
@@ -416,7 +406,7 @@ V86Starter.prototype.continue_init = async function(emulator, options)
 
         if(file.buffer instanceof ArrayBuffer)
         {
-            var buffer = new SyncBuffer(file.buffer);
+            var buffer = new v86util.SyncBuffer(file.buffer);
             files_to_load.push({
                 name: name,
                 loadable: buffer,
@@ -465,7 +455,7 @@ V86Starter.prototype.continue_init = async function(emulator, options)
                 }
                 else
                 {
-                    buffer = new v86util.AsyncXHRBuffer(file.url, file.size);
+                    buffer = new v86util.AsyncXHRBuffer(file.url, file.size, file.fixed_chunk_size);
                 }
 
                 files_to_load.push({
@@ -507,8 +497,8 @@ V86Starter.prototype.continue_init = async function(emulator, options)
 
     if(options["filesystem"])
     {
-        var fs_url = options["filesystem"]["basefs"];
-        var base_url = options["filesystem"]["baseurl"];
+        var fs_url = options["filesystem"].basefs;
+        var base_url = options["filesystem"].baseurl;
 
         let file_storage = new MemoryFileStorage();
 
@@ -520,14 +510,14 @@ V86Starter.prototype.continue_init = async function(emulator, options)
 
         if(fs_url)
         {
-            console.assert(base_url, "Filesystem: baseurl must be specified");
+            dbg_assert(base_url, "Filesystem: baseurl must be specified");
 
             var size;
 
             if(typeof fs_url === "object")
             {
-                size = fs_url["size"];
-                fs_url = fs_url["url"];
+                size = fs_url.size;
+                fs_url = fs_url.url;
             }
             dbg_assert(typeof fs_url === "string");
 
@@ -567,7 +557,7 @@ V86Starter.prototype.continue_init = async function(emulator, options)
             v86util.load_file(f.url, {
                 done: function(result)
                 {
-                    put_on_settings.call(this, f.name, f.as_json ? result : new SyncBuffer(result));
+                    put_on_settings.call(this, f.name, f.as_json ? result : new v86util.SyncBuffer(result));
                     cont(index + 1);
                 }.bind(this),
                 progress: function progress(e)
@@ -600,7 +590,7 @@ V86Starter.prototype.continue_init = async function(emulator, options)
     }.bind(this);
     cont(0);
 
-    function done()
+    async function done()
     {
         //if(settings.initial_state)
         //{
@@ -621,18 +611,17 @@ V86Starter.prototype.continue_init = async function(emulator, options)
 
             if(options["bzimage_initrd_from_filesystem"])
             {
-                const { bzimage, initrd } = this.get_bzimage_initrd_from_filesystem(settings.fs9p);
+                const { bzimage_path, initrd_path } = this.get_bzimage_initrd_from_filesystem(settings.fs9p);
 
-                dbg_log("Found bzimage: " + bzimage + " and initrd: " + initrd);
+                dbg_log("Found bzimage: " + bzimage_path + " and initrd: " + initrd_path);
 
-                Promise.all([
-                    settings.fs9p.read_file(initrd),
-                    settings.fs9p.read_file(bzimage),
-                ]).then(([initrd, bzimage]) => {
-                    put_on_settings.call(this, "initrd", new SyncBuffer(initrd.buffer));
-                    put_on_settings.call(this, "bzimage", new SyncBuffer(bzimage.buffer));
-                    finish.call(this);
-                });
+                const [initrd, bzimage] = await Promise.all([
+                    settings.fs9p.read_file(initrd_path),
+                    settings.fs9p.read_file(bzimage_path),
+                ]);
+                put_on_settings.call(this, "initrd", new v86util.SyncBuffer(initrd.buffer));
+                put_on_settings.call(this, "bzimage", new v86util.SyncBuffer(bzimage.buffer));
+                finish.call(this);
             }
             else
             {
@@ -641,7 +630,7 @@ V86Starter.prototype.continue_init = async function(emulator, options)
         }
         else
         {
-            console.assert(
+            dbg_assert(
                 !options["bzimage_initrd_from_filesystem"],
                 "bzimage_initrd_from_filesystem: Requires a filesystem");
             finish.call(this);
@@ -678,8 +667,8 @@ V86Starter.prototype.get_bzimage_initrd_from_filesystem = function(filesystem)
     const root = (filesystem.read_dir("/") || []).map(x => "/" + x);
     const boot = (filesystem.read_dir("/boot/") || []).map(x => "/boot/" + x);
 
-    let initrd;
-    let bzimage;
+    let initrd_path;
+    let bzimage_path;
 
     for(let f of [].concat(root, boot))
     {
@@ -687,25 +676,25 @@ V86Starter.prototype.get_bzimage_initrd_from_filesystem = function(filesystem)
         const is_bzimage = /vmlinuz/i.test(f) || /bzimage/i.test(f);
         const is_initrd = /initrd/i.test(f) || /initramfs/i.test(f);
 
-        if(is_bzimage && (!bzimage || !old))
+        if(is_bzimage && (!bzimage_path || !old))
         {
-            bzimage = f;
+            bzimage_path = f;
         }
 
-        if(is_initrd && (!initrd || !old))
+        if(is_initrd && (!initrd_path || !old))
         {
-            initrd = f;
+            initrd_path = f;
         }
     }
 
-    if(!initrd || !bzimage)
+    if(!initrd_path || !bzimage_path)
     {
         console.log("Failed to find bzimage or initrd in filesystem. Files:");
         console.log(root.join(" "));
         console.log(boot.join(" "));
     }
 
-    return { initrd, bzimage };
+    return { initrd_path, bzimage_path };
 };
 
 /**
@@ -713,7 +702,7 @@ V86Starter.prototype.get_bzimage_initrd_from_filesystem = function(filesystem)
  * asynchronous.
  * @export
  */
-V86Starter.prototype.run = function()
+V86Starter.prototype.run = async function()
 {
     this.bus.send("cpu-run");
 };
@@ -722,18 +711,30 @@ V86Starter.prototype.run = function()
  * Stop emulation. Do nothing if emulator is not running. Can be asynchronous.
  * @export
  */
-V86Starter.prototype.stop = function()
+V86Starter.prototype.stop = async function()
 {
-    this.bus.send("cpu-stop");
+    if(!this.cpu_is_running)
+    {
+        return;
+    }
+
+    await new Promise(resolve => {
+        const listener = () => {
+            this.remove_listener("emulator-stopped", listener);
+            resolve();
+        };
+        this.add_listener("emulator-stopped", listener);
+        this.bus.send("cpu-stop");
+    });
 };
 
 /**
  * @ignore
  * @export
  */
-V86Starter.prototype.destroy = function()
+V86Starter.prototype.destroy = async function()
 {
-    this.stop();
+    await this.stop();
 
     this.v86.destroy();
     this.keyboard_adapter && this.keyboard_adapter.destroy();
@@ -741,6 +742,7 @@ V86Starter.prototype.destroy = function()
     this.mouse_adapter && this.mouse_adapter.destroy();
     this.screen_adapter && this.screen_adapter.destroy();
     this.serial_adapter && this.serial_adapter.destroy();
+    this.speaker_adapter && this.speaker_adapter.destroy();
 };
 
 /**
@@ -794,34 +796,22 @@ V86Starter.prototype.remove_listener = function(event, listener)
  * @param {ArrayBuffer} state
  * @export
  */
-V86Starter.prototype.restore_state = function(state)
+V86Starter.prototype.restore_state = async function(state)
 {
+    dbg_assert(arguments.length === 1);
     this.v86.restore_state(state);
 };
 
 /**
- * Asynchronously save the current state of the emulator. The first argument to
- * the callback is an Error object if something went wrong and is null
- * otherwise.
+ * Asynchronously save the current state of the emulator.
  *
- * @param {function(Object, ArrayBuffer)} callback
+ * @return {Promise<ArrayBuffer>}
  * @export
  */
-V86Starter.prototype.save_state = function(callback)
+V86Starter.prototype.save_state = async function()
 {
-    // Might become asynchronous at some point
-
-    setTimeout(function()
-    {
-        try
-        {
-            callback(null, this.v86.save_state());
-        }
-        catch(e)
-        {
-            callback(e, null);
-        }
-    }.bind(this), 0);
+    dbg_assert(arguments.length === 0);
+    return this.v86.save_state();
 };
 
 /**
@@ -1183,18 +1173,15 @@ V86Starter.prototype.mount_fs = async function(path, baseurl, basefs, callback)
 
 /**
  * Write to a file in the 9p filesystem. Nothing happens if no filesystem has
- * been initialized. First argument to the callback is an error object if
- * something went wrong and null otherwise.
+ * been initialized.
  *
  * @param {string} file
  * @param {Uint8Array} data
- * @param {function(Object)=} callback
  * @export
  */
-V86Starter.prototype.create_file = function(file, data, callback)
+V86Starter.prototype.create_file = async function(file, data)
 {
-    callback = callback || function() {};
-
+    dbg_assert(arguments.length === 2);
     var fs = this.fs9p;
 
     if(!fs)
@@ -1211,15 +1198,11 @@ V86Starter.prototype.create_file = function(file, data, callback)
 
     if(!not_found)
     {
-        fs.CreateBinaryFile(filename, parent_id, data)
-            .then(() => callback(null));
+        await fs.CreateBinaryFile(filename, parent_id, data);
     }
     else
     {
-        setTimeout(function()
-        {
-            callback(new FileNotFoundError());
-        }, 0);
+        return Promise.reject(new FileNotFoundError());
     }
 };
 
@@ -1228,11 +1211,11 @@ V86Starter.prototype.create_file = function(file, data, callback)
  * initialized.
  *
  * @param {string} file
- * @param {function(Object, Uint8Array)} callback
  * @export
  */
-V86Starter.prototype.read_file = function(file, callback)
+V86Starter.prototype.read_file = async function(file)
 {
+    dbg_assert(arguments.length === 1);
     var fs = this.fs9p;
 
     if(!fs)
@@ -1240,16 +1223,16 @@ V86Starter.prototype.read_file = function(file, callback)
         return;
     }
 
-    fs.read_file(file).then((result) => {
-        if(result)
-        {
-            callback(null, result);
-        }
-        else
-        {
-            callback(new FileNotFoundError(), null);
-        }
-    });
+    const result = await fs.read_file(file);
+
+    if(result)
+    {
+        return result;
+    }
+    else
+    {
+        return Promise.reject(new FileNotFoundError());
+    }
 };
 
 V86Starter.prototype.automatically = function(steps)
@@ -1311,7 +1294,7 @@ V86Starter.prototype.automatically = function(steps)
             return;
         }
 
-        console.assert(false, step);
+        dbg_assert(false, step);
     };
 
     run(steps);

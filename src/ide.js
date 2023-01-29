@@ -6,38 +6,6 @@ import { h } from "./lib";
 import { dbg_assert, dbg_log } from "./log";
 import { CMOS_BIOS_DISKTRANSFLAG, CMOS_DISK_DATA, CMOS_DISK_DRIVE1_CYL } from "./rtc";
 
-/** @param {number=} length */
-function hex_dump(buffer, length)
-{
-    var result = [];
-    length = length || buffer.byteLength;
-    var addr = 0;
-    var line, byt;
-
-    for(var i = 0; i < length >> 4; i++)
-    {
-        line = h(addr + (i << 4), 5) + "   ";
-
-        for(var j = 0; j < 0x10; j++)
-        {
-            byt = buffer[addr + (i << 4) + j];
-            line += h(byt, 2) + " ";
-        }
-
-        line += "  ";
-
-        for(j = 0; j < 0x10; j++)
-        {
-            byt = buffer[addr + (i << 4) + j];
-            line += (byt < 33 || byt > 126) ? "." : String.fromCharCode(byt);
-        }
-
-        result.push(line);
-    }
-
-    return "\n" + result.join("\n");
-}
-
 /** @const */
 export var CDROM_SECTOR_SIZE = 2048;
 /** @const */
@@ -89,8 +57,8 @@ function IDEDevice(cpu, master_buffer, slave_buffer, is_cd, nr, bus)
     this.pci_space = [
         0x86, 0x80, 0x10, 0x70, 0x05, 0x00, 0xA0, 0x02,
         0x00, 0x80, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
-        0 | 1, 0, 0x00, 0x00,
-        0 | 1, 0, 0x00, 0x00,
+        this.ata_port & 0xFF | 1, this.ata_port >> 8, 0x00, 0x00,
+        this.ata_port_high & 0xFF | 1, this.ata_port_high >> 8, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, // second device
         0x00, 0x00, 0x00, 0x00, // second device
         this.master_port & 0xFF | 1,   this.master_port >> 8, 0x00, 0x00,

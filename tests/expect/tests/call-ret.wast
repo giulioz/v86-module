@@ -22,7 +22,6 @@
   (type $t20 (func (param i32 i64 i64 i32) (result i32)))
   (import "e" "safe_write32_slow_jit" (func $e.safe_write32_slow_jit (type $t16)))
   (import "e" "safe_read32s_slow_jit" (func $e.safe_read32s_slow_jit (type $t7)))
-  (import "e" "get_phys_eip_slow_jit" (func $e.get_phys_eip_slow_jit (type $t6)))
   (import "e" "jit_find_cache_entry_in_page" (func $e.jit_find_cache_entry_in_page (type $t16)))
   (import "e" "instr_F4" (func $e.instr_F4 (type $t0)))
   (import "e" "trigger_fault_end_jit" (func $e.trigger_fault_end_jit (type $t0)))
@@ -142,7 +141,7 @@
                     (i32.and
                       (tee_local $l9
                         (i32.load
-                          (i32.const 116)))
+                          (i32.const 100)))
                       (i32.const 1))
                     (then
                       (set_local $l9
@@ -156,7 +155,7 @@
                           (get_local $l9))
                         (i32.xor
                           (i32.load
-                            (i32.const 96))
+                            (i32.const 104))
                           (get_local $l9))))
                     (else
                       (i32.and
@@ -164,7 +163,7 @@
                           (i32.const 120))
                         (i32.const 1))))))
               (i32.store
-                (i32.const 96)
+                (i32.const 104)
                 (get_local $l0))
               (set_local $l0
                 (i32.add
@@ -173,12 +172,9 @@
               (i32.store
                 (i32.const 112)
                 (get_local $l0))
-              (i32.store
-                (i32.const 104)
-                (i32.const 31))
-              (i32.store
-                (i32.const 116)
-                (i32.const 2260))
+              (i64.store
+                (i32.const 96)
+                (i64.const 9706626088991))
               (i32.const 0)
               (set_local $l9
                 (i32.add
@@ -225,39 +221,12 @@
                 (i32.const 740))
               (i32.add)
               (i32.store offset=556)
-              (set_local $l9
-                (i32.load
-                  (i32.const 556)))
-              (block $B9
-                (br_if $B9
-                  (i32.eq
-                    (i32.and
-                      (tee_local $l10
-                        (i32.load offset={normalised output}
-                          (i32.shl
-                            (i32.shr_u
-                              (get_local $l9)
-                              (i32.const 12))
-                            (i32.const 2))))
-                      (i32.const 4041))
-                    (i32.const 1)))
-                (br_if $B1
-                  (i32.and
-                    (tee_local $l10
-                      (call $e.get_phys_eip_slow_jit
-                        (get_local $l9)))
-                    (i32.const 1))))
               (br_if $L2
                 (i32.ge_s
                   (tee_local $p0
                     (call $e.jit_find_cache_entry_in_page
-                      (i32.sub
-                        (i32.xor
-                          (i32.and
-                            (get_local $l10)
-                            (i32.const -4096))
-                          (get_local $l9))
-                        (i32.const 5402624))
+                      (i32.load
+                        (i32.const 556))
                       (i32.const 899)
                       (i32.const 3)))
                   (i32.const 0)))

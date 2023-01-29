@@ -14,13 +14,11 @@ const print_stats = {
         const stat_names = [
             "COMPILE",
             "COMPILE_SKIPPED_NO_NEW_ENTRY_POINTS",
-            "COMPILE_SUCCESS",
             "COMPILE_WRONG_ADDRESS_SPACE",
             "COMPILE_CUT_OFF_AT_END_OF_PAGE",
             "COMPILE_WITH_LOOP_SAFETY",
             "COMPILE_PAGE",
-            "COMPILE_PAGE/COMPILE_SUCCESS",
-            "COMPILE_PAGE_SKIPPED_NO_NEW_ENTRY_POINTS",
+            "COMPILE_PAGE/COMPILE",
             "COMPILE_BASIC_BLOCK",
             "COMPILE_DUPLICATED_BASIC_BLOCK",
             "COMPILE_WASM_BLOCK",
@@ -29,14 +27,17 @@ const print_stats = {
             "COMPILE_ENTRY_POINT",
             "COMPILE_WASM_TOTAL_BYTES",
             "COMPILE_WASM_TOTAL_BYTES/COMPILE_PAGE",
-            "JIT_CACHE_OVERRIDE",
-            "JIT_CACHE_OVERRIDE_DIFFERENT_STATE_FLAGS",
             "RUN_INTERPRETED",
-            "RUN_INTERPRETED_PENDING",
+            "RUN_INTERPRETED_NEW_PAGE",
+            "RUN_INTERPRETED_PAGE_HAS_CODE",
+            "RUN_INTERPRETED_PAGE_HAS_ENTRY_AFTER_PAGE_WALK",
             "RUN_INTERPRETED_NEAR_END_OF_PAGE",
             "RUN_INTERPRETED_DIFFERENT_STATE",
+            "RUN_INTERPRETED_DIFFERENT_STATE_CPL3",
+            "RUN_INTERPRETED_DIFFERENT_STATE_FLAT",
+            "RUN_INTERPRETED_DIFFERENT_STATE_IS32",
+            "RUN_INTERPRETED_DIFFERENT_STATE_SS32",
             "RUN_INTERPRETED_MISSED_COMPILED_ENTRY_RUN_INTERPRETED",
-            "RUN_INTERPRETED_MISSED_COMPILED_ENTRY_LOOKUP",
             "RUN_INTERPRETED_STEPS",
             "RUN_FROM_CACHE",
             "RUN_FROM_CACHE_STEPS",
@@ -63,6 +64,9 @@ const print_stats = {
             "LOOP_SAFETY",
             "CONDITION_OPTIMISED",
             "CONDITION_UNOPTIMISED",
+            "CONDITION_UNOPTIMISED_PF",
+            "CONDITION_UNOPTIMISED_UNHANDLED_L",
+            "CONDITION_UNOPTIMISED_UNHANDLED_LE",
             "FAILED_PAGE_CHANGE",
             "SAFE_READ_FAST",
             "SAFE_READ_SLOW_PAGE_CROSSED",
@@ -85,7 +89,6 @@ const print_stats = {
             "SAFE_READ_WRITE_SLOW_HAS_CODE",
             "PAGE_FAULT",
             "TLB_MISS",
-            "DO_RUN",
             "DO_MANY_CYCLES",
             "CYCLE_INTERNAL",
             "INVALIDATE_ALL_MODULES_NO_FREE_WASM_INDICES",
@@ -108,6 +111,10 @@ const print_stats = {
             "MODRM_COMPLEX",
             "SEG_OFFSET_OPTIMISED",
             "SEG_OFFSET_NOT_OPTIMISED",
+            "SEG_OFFSET_NOT_OPTIMISED_ES",
+            "SEG_OFFSET_NOT_OPTIMISED_FS",
+            "SEG_OFFSET_NOT_OPTIMISED_GS",
+            "SEG_OFFSET_NOT_OPTIMISED_NOT_FLAT",
         ];
 
         let j = 0;
@@ -145,9 +152,9 @@ const print_stats = {
         text += "wasm memory size: " + (cpu.wasm_memory.buffer.byteLength >> 20) + "m\n";
 
         text += "Config:\n";
-        text += "MAX_PAGES=" + cpu.wm.exports["get_config"](0) + "\n";
-        text += "JIT_USE_LOOP_SAFETY=" + cpu.wm.exports["get_config"](1) + "\n";
-        text += "MAX_EXTRA_BASIC_BLOCKS=" + cpu.wm.exports["get_config"](2) + "\n";
+        text += "MAX_PAGES=" + cpu.wm.exports["get_jit_config"](0) + "\n";
+        text += "JIT_USE_LOOP_SAFETY=" + Boolean(cpu.wm.exports["get_jit_config"](1)) + "\n";
+        text += "MAX_EXTRA_BASIC_BLOCKS=" + cpu.wm.exports["get_jit_config"](2) + "\n";
 
         return text;
     },
@@ -239,7 +246,7 @@ const print_stats = {
 
         for(let i = 0; i < 0x100; i++)
         {
-            text += h(i, 2).slice(2) + ":" + v86util.pads(Math.round(per_opcode[i] / factor), pad_length);
+            text += i.toString(16).padStart(2, "0") + ":" + v86util.pads(Math.round(per_opcode[i] / factor), pad_length);
 
             if(i % 16 == 15)
                 text += "\n";
@@ -252,7 +259,7 @@ const print_stats = {
 
         for(let i = 0; i < 0x100; i++)
         {
-            text += h(i & 0xFF, 2).slice(2) + ":" + v86util.pads(Math.round(per_opcode0f[i] / factor), pad_length);
+            text += (i & 0xFF).toString(16).padStart(2, "0") + ":" + v86util.pads(Math.round(per_opcode0f[i] / factor), pad_length);
 
             if(i % 16 == 15)
                 text += "\n";
